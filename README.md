@@ -1,7 +1,7 @@
 # MedScan+ — Offline Medical Intelligence Engine
 
 <p align="center">
-  <img src="medscan-web/public/icon-192.png" alt="MedScan+ Logo" width="80" />
+  <img src="public/icon-192.png" alt="MedScan+ Logo" width="80" />
 </p>
 
 <p align="center">
@@ -46,7 +46,7 @@ Built as a CV/portfolio project demonstrating full-stack engineering, offline-fi
 ## Architecture
 
 ```
-medscan-web/
+MedScanAI/
 ├── public/
 │   └── db/
 │       └── medicines-optimized.csv   ← 11,800-row medicine dataset (8 columns)
@@ -135,7 +135,7 @@ CSV File → Web Worker → IndexedDB Cache (v3)
 ```bash
 # Clone
 git clone https://github.com/MohammadFayasKhan/MedScanAI.git
-cd MedScanAI/medscan-web
+cd MedScanAI
 
 # Install dependencies
 npm install
@@ -162,9 +162,9 @@ npm run preview     # Preview production build locally
 ```dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY medscan-web/package*.json ./
+COPY package*.json ./
 RUN npm ci
-COPY medscan-web/ .
+COPY . .
 RUN npm run build
 
 FROM nginx:alpine
@@ -273,8 +273,7 @@ All enriched content includes a mandatory disclaimer: *"⚕️ For informational
 
 ```
 MedScanAI/
-└── medscan-web/
-    ├── public/
+├── public/
     │   ├── db/medicines-optimized.csv   ✅ 11,800 medicine dataset
     │   ├── icon-192.png
     │   └── icon-512.png
