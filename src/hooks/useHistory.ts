@@ -6,10 +6,20 @@ import { useState, useCallback } from 'react';
 import { ScanHistory } from '../types/medicine';
 
 const STORAGE_KEY = 'medscan-history-v1';
+const PINNED_KEY = 'medscan-pinned-v1';
 
 function loadHistory(): ScanHistory[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadPinned(): ScanHistory[] {
+  try {
+    const raw = localStorage.getItem(PINNED_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -22,8 +32,15 @@ function saveHistory(history: ScanHistory[]) {
   } catch {}
 }
 
+function savePinned(pinned: ScanHistory[]) {
+  try {
+    localStorage.setItem(PINNED_KEY, JSON.stringify(pinned));
+  } catch {}
+}
+
 export function useHistory() {
   const [history, setHistory] = useState<ScanHistory[]>(loadHistory);
+  const [pinned, setPinned] = useState<ScanHistory[]>(loadPinned);
 
   const addEntry = useCallback((entry: Omit<ScanHistory, 'id' | 'scanned_at'>) => {
     setHistory(prev => {
@@ -40,10 +57,24 @@ export function useHistory() {
     });
   }, []);
 
+  const togglePin = useCallback((medicine: ScanHistory) => {
+    setPinned(prev => {
+      const isPinned = prev.some(p => p.medicine_id === medicine.medicine_id);
+      let updated;
+      if (isPinned) {
+        updated = prev.filter(p => p.medicine_id !== medicine.medicine_id);
+      } else {
+        updated = [...prev, medicine];
+      }
+      savePinned(updated);
+      return updated;
+    });
+  }, []);
+
   const clear = useCallback(() => {
     setHistory([]);
     localStorage.removeItem(STORAGE_KEY);
   }, []);
 
-  return { history, addEntry, clear };
+  return { history, pinned, addEntry, togglePin, clear };
 }

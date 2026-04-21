@@ -11,7 +11,6 @@ export default function Navbar() {
 
   const navLinks = [
     { label: 'Home', path: '/', icon: Home },
-    { label: 'Search', path: '/search', icon: Pill },
     { label: 'Chatbot', path: '/chat', icon: MessageCircle }
   ];
 

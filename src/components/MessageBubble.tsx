@@ -7,26 +7,12 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ChatMessage } from '../types/medicine';
 import { Bot, Check, CheckCheck } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface Props { message: ChatMessage; }
 
-function renderMarkdown(text: string): React.ReactNode[] {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) =>
-    part.startsWith('**') && part.endsWith('**')
-      ? <strong key={i} style={{ color: '#fff', fontWeight: 600 }}>{part.slice(2, -2)}</strong>
-      : <span key={i}>{part}</span>
-  );
-}
 
-function renderContent(content: string): React.ReactNode {
-  return content.split('\n').map((line, i, arr) => (
-    <span key={i}>
-      {renderMarkdown(line)}
-      {i < arr.length - 1 && <br />}
-    </span>
-  ));
-}
 
 export default function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user';
@@ -95,11 +81,16 @@ export default function MessageBubble({ message }: Props) {
           wordBreak: 'break-word',
         }}
       >
-        {renderContent(isUser ? message.content : displayedText)}
+        {/* Wrap in prose class for styling lists/bold */}
+        <div className={`prose prose-sm prose-invert max-w-none ${isStreaming ? 'streaming-markdown' : ''}`} style={{ color: 'var(--color-text-primary)' }}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {isUser ? message.content : displayedText}
+          </ReactMarkdown>
+        </div>
         {isStreaming && (
           <span
             className="inline-block w-[2px] h-[14px] ml-0.5 align-middle animate-pulse"
-            style={{ background: 'var(--color-primary)', borderRadius: 1 }}
+            style={{ background: 'var(--color-primary)', borderRadius: 1, marginTop: '-4px' }}
           />
         )}
         <div className="flex justify-end items-center gap-1 mt-1.5 opacity-50">

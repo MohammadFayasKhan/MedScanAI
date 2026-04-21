@@ -6,17 +6,18 @@
 
 /* ── CSS Custom Properties (tokens) ────────────────────────────────── */
 :root {
-  --color-background:    #0B0F14;
-  --color-surface:       rgba(255, 255, 255, 0.05);
-  --color-surface-light: rgba(255, 255, 255, 0.08);
-  --color-surface-border:rgba(255, 255, 255, 0.1);
+  --color-background:    #0A0E1A;
+  --color-surface:       rgba(255, 255, 255, 0.03);
+  --color-surface-light: rgba(255, 255, 255, 0.05);
+  --color-surface-border:rgba(255, 255, 255, 0.08);
 
-  --color-primary:   #06B6D4;
-  --color-primary-light: #22D3EE;
-  --color-success:   #2ECC71;
-  --color-warning:   #F5A623;
-  --color-danger:    #E74C3C;
-  --color-error:     #E74C3C;
+  --color-primary:   #00D4FF;
+  --color-primary-light: #4DE4FF;
+  --color-secondary: #7C3AED;
+  --color-success:   #10B981;
+  --color-warning:   #F59E0B;
+  --color-danger:    #EF4444;
+  --color-error:     #EF4444;
 
   --color-text-primary:   #ffffff;
   --color-text-secondary: rgba(255, 255, 255, 0.6);

@@ -22,15 +22,7 @@ import { useChatbot } from '../hooks/useChatbot';
 import { useMedicineContext } from '../context/MedicineContext';
 import { getMedicineById } from '../db/database';
 
-// Quick action buttons shown when a medicine is in context
-const QUICK_ACTIONS = [
-  { label: 'Dosage',           emoji: '💊' },
-  { label: 'Side effects',     emoji: '⚡' },
-  { label: 'Pregnancy safety', emoji: '🤰' },
-  { label: 'Drug interactions',emoji: '🔗' },
-  { label: 'How does it work', emoji: '🧬' },
-  { label: 'Substitutes',      emoji: '🔄' },
-];
+import SuggestionChips from '../components/chat/SuggestionChips';
 
 export default function ChatbotPage() {
   const [searchParams]   = useSearchParams();
@@ -109,30 +101,7 @@ export default function ChatbotPage() {
         </div>
       </div>
 
-      <AnimatePresence>
-        {showActions && medicine && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden border-b border-surface-border bg-surface-light"
-          >
-            <div className="px-4 py-3 flex flex-wrap gap-2">
-              {QUICK_ACTIONS.map(({ label, emoji }) => (
-                <AnimatedButton
-                  key={label}
-                  variant="secondary"
-                  onClick={() => { handleSend(label); setShowActions(false); }}
-                  className="!px-3 !py-1.5 !text-xs !rounded-full !bg-primary/10 !border-primary/20 !text-primary hover:!bg-primary/20"
-                >
-                  <span>{emoji}</span> {label}
-                </AnimatedButton>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
 
       {/* ── Messages ─────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 max-w-3xl mx-auto w-full">
@@ -156,23 +125,12 @@ export default function ChatbotPage() {
         </AnimatePresence>
 
         {/* Dynamic suggestion chips */}
-        <AnimatePresence>
-          {!isTyping && dynamicChips.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-wrap gap-2 py-3">
-              {dynamicChips.map(chip => (
-                <AnimatedButton key={chip}
-                  variant="secondary"
-                  onClick={() => handleSend(chip)}
-                  className="!px-4 !py-2 !rounded-full !text-xs !bg-primary/10 !border-primary/20 !text-primary hover:!bg-primary/20"
-                >
-                  {chip}
-                </AnimatedButton>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <SuggestionChips 
+          activeMedicine={medicine} 
+          isTyping={isTyping} 
+          onSend={handleSend} 
+          dynamicChips={dynamicChips} 
+        />
 
         <div ref={bottomRef} className="h-4" />
       </div>
