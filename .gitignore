@@ -34,5 +34,4 @@ dist-ssr/
 # Tesseract training data cache
 /public/tessdata/
 
-# Large CSVs (tracked via Git LFS or excluded — too large for standard commit)
-*.csv
+# Git LFS handles CSV tracking

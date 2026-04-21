@@ -1,7 +1,7 @@
-# MedScan+ — Offline Medical Intelligence Engine
+# MedScanAI Offline Medical Intelligence Engine
 
 <p align="center">
-  <img src="public/icon-192.png" alt="MedScan+ Logo" width="80" />
+  <img src="public/banner.png" alt="MedScan+ Dashboard UI" width="100%" style="border-radius: 12px; margin-bottom: 20px;" />
 </p>
 
 <p align="center">
@@ -49,7 +49,7 @@ Built as a CV/portfolio project demonstrating full-stack engineering, offline-fi
 MedScanAI/
 ├── public/
 │   └── db/
-│       └── medicines-optimized.csv   ← 11,800-row medicine dataset (8 columns)
+│       └── medscan_optimized_dataset.csv   ← 11,800-row medicine dataset (8 columns)
 │
 └── src/
     ├── workers/
@@ -146,7 +146,7 @@ npm run dev
 
 Open [http://localhost:5173](http://localhost:5173)
 
-> **First load**: The app parses 11,800 CSV rows in a Web Worker (~2–4s). Subsequent loads use IndexedDB cache (instant).
+> **First load**: The app parses 11,800 CSV rows in a Web Worker (~2–4s). Subsequent loads use IndexedDB cache (v4, instant).
 
 ### Production Build
 
@@ -274,7 +274,7 @@ All enriched content includes a mandatory disclaimer: *"⚕️ For informational
 ```
 MedScanAI/
 ├── public/
-    │   ├── db/medicines-optimized.csv   ✅ 11,800 medicine dataset
+    │   ├── db/medscan_optimized_dataset.csv   ✅ 11,800 medicine dataset
     │   ├── icon-192.png
     │   └── icon-512.png
     ├── src/
@@ -297,7 +297,7 @@ MedScanAI/
 ## Developer Notes
 
 ### IndexedDB Cache
-The worker stores parsed CSV in IndexedDB under key `medscan-csv-store-v3`. To force a re-parse (after CSV changes), increment this version in both `db.worker.ts` and `db/database.ts`.
+The worker stores parsed CSV in IndexedDB under key `medscan-csv-store-v4`. To force a re-parse (after CSV changes), increment this version in both `db.worker.ts` and `db/database.ts`.
 
 ### COOP/COEP Headers
 Required for Tesseract.js WASM. Set in `vite.config.ts` for dev and configured in nginx for production:

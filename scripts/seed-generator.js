@@ -11,7 +11,7 @@ const path = require('path');
 const { parse }  = require('csv-parse/sync');
 const Database   = require('better-sqlite3');
 
-const CSV_PATH = '/Users/fayaskhan/Desktop/MesScanAI/Medicine_Details.csv';
+const CSV_PATH = path.join(__dirname, '../medscan_details_data.csv');
 const DB_OUT   = path.join(__dirname, '../public/db/medicines.db');
 const SQL_PATH = path.join(__dirname, '../src/db/schema.sql');
 

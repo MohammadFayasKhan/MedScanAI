@@ -2,8 +2,8 @@ import Papa from 'papaparse';
 import { Medicine } from '../types/medicine';
 import localforage from 'localforage';
 
-const CSV_PATH = '/db/medicines-optimized.csv';
-const DB_CACHE_NAME = 'medscan-csv-store-v3';
+const CSV_PATH = '/db/medscan_optimized_dataset.csv';
+const DB_CACHE_NAME = 'medscan-csv-store-v4';
 
 let medIndex: Map<number, Medicine> = new Map();
 let searchArray: Medicine[] = [];
@@ -40,7 +40,7 @@ async function initializeDatabase() {
         
         for (let i = 0; i < data.length; i++) {
           const row = data[i];
-          // medicines-optimized.csv headers: name, composition, form, uses, sideEffects, mechanism, category, tips
+          // medscan_optimized_dataset.csv headers: name, composition, form, uses, sideEffects, mechanism, category, tips
           const brandName = (row.name || row.medicine_name || row['Medicine Name'] || '').trim();
           if (!brandName) continue;
 

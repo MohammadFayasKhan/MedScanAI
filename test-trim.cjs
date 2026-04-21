@@ -4,7 +4,7 @@ const { parse } = require('csv-parse');
 let totalSize = 0;
 let rowCount = 0;
 
-fs.createReadStream('./Medicine_Data.csv')
+fs.createReadStream('./medscan_raw_data.csv')
   .pipe(parse({ columns: true, skip_empty_lines: true }))
   .on('data', (row) => {
     rowCount++;
