@@ -2,10 +2,9 @@
  * MedScan+ — Router Setup
  * All 5 routes with lazy loading and context providers.
  */
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { DatabaseProvider } from './context/DatabaseContext';
-import { MedicineProvider } from './context/MedicineContext';
 
 const HomePage           = lazy(() => import('./pages/HomePage'));
 const MedicineDetailPage = lazy(() => import('./pages/MedicineDetailPage'));
@@ -19,9 +18,8 @@ import MainLayout from './components/layout/MainLayout';
 export default function App() {
   return (
     <DatabaseProvider>
-      <MedicineProvider>
-        <BrowserRouter>
-          <Routes>
+      <BrowserRouter>
+        <Routes>
             <Route element={<MainLayout />}>
               <Route path="/"              element={<HomePage />} />
               <Route path="/medicine/:id"  element={<MedicineDetailPage />} />
@@ -29,9 +27,8 @@ export default function App() {
               <Route path="/history"       element={<HistoryPage />} />
               <Route path="*"              element={<HomePage />} />
             </Route>
-          </Routes>
-        </BrowserRouter>
-      </MedicineProvider>
+        </Routes>
+      </BrowserRouter>
     </DatabaseProvider>
   );
 }

@@ -3,12 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { Medicine } from '../types/medicine';
-import { useMedicineContext } from '../context/MedicineContext';
-import { searchMedicines, addToHistory } from '../db/database';
+import { useAppStore } from '../ai/contextManager';
+import { searchMedicines } from '../db/database';
 
-export default function GlobalSearch() {
+interface GlobalSearchProps {
+  onFocusChange?: (focused: boolean) => void;
+}
+
+export default function GlobalSearch({ onFocusChange }: GlobalSearchProps) {
   const navigate = useNavigate();
-  const { setCurrentMedicine } = useMedicineContext();
+  const setActiveMedicine = useAppStore(state => state.setActiveMedicine);
+  const addRecentMedicine = useAppStore(state => state.addRecentMedicine);
   
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Medicine[]>([]);
@@ -46,8 +51,8 @@ export default function GlobalSearch() {
   };
 
   const handleSelectMedicine = (med: Medicine) => {
-    addToHistory(med.id, med.brand_name, 'manual');
-    setCurrentMedicine(med);
+    addRecentMedicine({ medicine_id: med.id, brand_name: med.brand_name, scan_method: 'manual' });
+    setActiveMedicine(med);
     setShowDropdown(false);
     setQuery('');
     navigate(`/medicine/${med.id}`);
@@ -61,7 +66,13 @@ export default function GlobalSearch() {
           type="text"
           value={query}
           onChange={handleSearchChange}
-          onFocus={() => { if (query) setShowDropdown(true); }}
+          onFocus={() => { 
+            if (onFocusChange) onFocusChange(true);
+            if (query) setShowDropdown(true); 
+          }}
+          onBlur={() => {
+            if (onFocusChange) onFocusChange(false);
+          }}
           placeholder="Search medicines, symptoms, categories..."
           className="w-full pl-10 pr-4 py-2.5 rounded-2xl text-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 bg-surface border border-surface-border text-white placeholder-text-secondary"
         />

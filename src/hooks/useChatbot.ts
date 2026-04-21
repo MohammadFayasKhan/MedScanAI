@@ -3,41 +3,18 @@
  *
  * Fixed: Always returning full medicine overview regardless of query.
  */
-import { useState, useCallback, useRef } from 'react';
-import { ChatMessage, Medicine } from '../types/medicine';
-import { processUserMessage, ChatContext } from '../ai/contextManager';
-
-const WELCOME_MSG: ChatMessage = {
-  id: 'welcome',
-  role: 'bot',
-  content: `👋 Hello! I'm **MedScan Assistant** — your intelligent offline medicine guide.\n\nYou can:\n• Type any **medicine name** to load its info (e.g. *Paracetamol*, *Amoxicillin*)\n• Describe **symptoms** (e.g. *fever*, *headache*, *infection*)\n• Ask about **dosage, side effects, pregnancy safety, interactions**\n• Ask multiple questions at once!`,
-  timestamp: new Date(),
-  chips: ['Paracetamol', 'Amoxicillin', 'fever medicine', 'Ibuprofen'],
-};
+import { useState, useCallback, useEffect } from 'react';
+import { ChatMessage } from '../types/medicine';
+import { processUserMessage, useAppStore, WELCOME_MSG } from '../ai/contextManager';
 
 export function useChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME_MSG]);
-  const [isTyping,  setIsTyping]  = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const addMessage = useAppStore(state => state.addMessage);
+  const chatHistory = useAppStore(state => state.chatHistory);
+  const clearChatStore = useAppStore(state => state.clearChat);
 
-  const contextRef = useRef<ChatContext>({
-    activeMedicine: null,
-    lastIntent: null,
-    history: [],
-  });
-
-  const sendMessage = useCallback(async (
-    rawText: string,
-    currentMedicine: Medicine | null,
-    setMedicineCallback: (m: Medicine | null) => void,
-  ) => {
+  const sendMessage = useCallback(async (rawText: string) => {
     if (!rawText.trim()) return;
-
-    // Sync context medicine
-    contextRef.current.activeMedicine = currentMedicine;
-    contextRef.current.history.push(rawText);
-    if (contextRef.current.history.length > 15) {
-      contextRef.current.history.shift();
-    }
 
     const userMsg: ChatMessage = {
       id: `u-${Date.now()}`,
@@ -45,21 +22,21 @@ export function useChatbot() {
       content: rawText.trim(),
       timestamp: new Date(),
     };
-    setMessages(prev => [...prev, userMsg]);
+    
+    addMessage(userMsg);
     setIsTyping(true);
 
     // Realistic typing delay
     await new Promise<void>(r => setTimeout(r, 600 + Math.random() * 400));
 
     try {
-      const response = await processUserMessage(
-        rawText,
-        contextRef.current
-      );
+      // Get the *current* active medicine from the store right before processing
+      const currentMed = useAppStore.getState().activeMedicine;
+      
+      const response = await processUserMessage(rawText, currentMed);
 
-      if (response.newMedicine !== currentMedicine) {
-        contextRef.current.activeMedicine = response.newMedicine;
-        setMedicineCallback(response.newMedicine);
+      if (response.newMedicine !== currentMed) {
+        useAppStore.getState().setActiveMedicine(response.newMedicine);
       }
 
       const botMsg: ChatMessage = {
@@ -70,7 +47,7 @@ export function useChatbot() {
         chips: response.chips,
       };
 
-      setMessages(prev => [...prev, botMsg]);
+      addMessage(botMsg);
     } catch (error) {
       console.error(error);
       const errorMsg: ChatMessage = {
@@ -79,20 +56,15 @@ export function useChatbot() {
         content: "Sorry, I encountered an error processing your request.",
         timestamp: new Date(),
       };
-      setMessages(prev => [...prev, errorMsg]);
+      addMessage(errorMsg);
     } finally {
       setIsTyping(false);
     }
-  }, []);
+  }, [addMessage]);
 
   const clearMessages = useCallback(() => {
-    contextRef.current = {
-      activeMedicine: null,
-      lastIntent: null,
-      history: [],
-    };
-    setMessages([WELCOME_MSG]);
-  }, []);
+    clearChatStore();
+  }, [clearChatStore]);
 
-  return { messages, isTyping, sendMessage, clearMessages };
+  return { messages: chatHistory, isTyping, sendMessage, clearMessages };
 }

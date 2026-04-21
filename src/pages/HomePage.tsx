@@ -10,8 +10,7 @@ import WebcamScanner from '../components/WebcamScanner';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { useOCR } from '../hooks/useOCR';
 import { useDatabaseContext } from '../context/DatabaseContext';
-import { useMedicineContext } from '../context/MedicineContext';
-import { addToHistory } from '../db/database';
+import { useAppStore } from '../ai/contextManager';
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -22,13 +21,14 @@ const FEATURES = [
   { icon: Database, title: 'Massive Database', desc: '192K+ medicines indexed offline', color: '#7DD8F0' },
   { icon: Zap, title: 'Instant Search', desc: 'Under 5ms response time', color: '#4ECDC4' },
   { icon: ShieldCheck, title: '100% Offline', desc: 'Zero internet required', color: '#2ECC71' },
-  { icon: MessageCircle, title: 'AI Chatbot', desc: 'Context-aware medical Q&A', color: '#9B59B6' },
+  { icon: MessageCircle, title: 'Medical Assistant', desc: 'Context-aware medical Q&A', color: '#9B59B6' },
 ];
 
 export default function HomePage() {
   const navigate   = useNavigate();
   const { isReady, error: dbError, progressMsg } = useDatabaseContext();
-  const { setCurrentMedicine }      = useMedicineContext();
+  const setActiveMedicine = useAppStore(state => state.setActiveMedicine);
+  const addRecentMedicine = useAppStore(state => state.addRecentMedicine);
   const { status, progress, scanImage, reset, error: ocrError } = useOCR();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showScanner, setShowScanner] = useState(false);
@@ -45,8 +45,8 @@ export default function HomePage() {
     setShowScanner(false);
     const medicine = await scanImage(imageSource);
     if (medicine) {
-      addToHistory(medicine.id, medicine.brand_name, method);
-      setCurrentMedicine(medicine);
+      addRecentMedicine({ medicine_id: medicine.id, brand_name: medicine.brand_name, scan_method: method });
+      setActiveMedicine(medicine);
       navigate(`/medicine/${medicine.id}`);
     } else {
       showToast(ocrError || 'Medicine not found. Try searching manually.');
@@ -98,18 +98,27 @@ export default function HomePage() {
         </motion.div>
 
         {/* Hero Text */}
-        <motion.h1 {...fadeUp} transition={{ delay: 0.2, duration: 0.6 }}
-          className="text-4xl md:text-5xl font-bold text-center mb-4 leading-tight"
-          style={{ fontFamily: 'var(--font-heading)' }}>
-          <span style={{ color: 'var(--color-text-primary)' }}>Scan. Search. </span>
-          <span style={{ background: 'linear-gradient(135deg, #4ECDC4, #7DD8F0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            Know.
-          </span>
-        </motion.h1>
-        <motion.p {...fadeUp} transition={{ delay: 0.3, duration: 0.6 }}
-          className="text-center text-sm md:text-base max-w-md mb-10" style={{ color: 'rgba(255,255,255,0.5)' }}>
-          Your offline medicine intelligence assistant. Instant pharmaceutical data at your fingertips.
-        </motion.p>
+        <motion.div {...fadeUp} transition={{ delay: 0.2, duration: 0.8, ease: "easeOut" }} className="relative z-10">
+          <motion.h1 
+            className="text-5xl md:text-6xl font-bold text-center mb-6 leading-tight tracking-tight"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            <span style={{ color: 'var(--color-text-primary)' }}>Scan. Search. </span>
+            <br className="sm:hidden" />
+            <motion.span 
+              initial={{ opacity: 0.8 }}
+              animate={{ opacity: 1, textShadow: "0px 0px 30px rgba(78, 205, 196, 0.4)" }}
+              transition={{ repeat: Infinity, direction: "alternate", duration: 2 }}
+              style={{ background: 'linear-gradient(135deg, #4ECDC4, #7DD8F0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+            >
+              Know.
+            </motion.span>
+          </motion.h1>
+          <p className="text-center text-sm md:text-base max-w-md mx-auto mb-10 leading-relaxed" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            Your premium offline medicine intelligence assistant. <br/>
+            Instant pharmaceutical data at your fingertips.
+          </p>
+        </motion.div>
 
         {/* Action Buttons */}
         <motion.div {...fadeUp} transition={{ delay: 0.4, duration: 0.6 }}

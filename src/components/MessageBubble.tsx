@@ -82,7 +82,7 @@ export default function MessageBubble({ message }: Props) {
         }}
       >
         {/* Wrap in prose class for styling lists/bold */}
-        <div className={`prose prose-sm prose-invert max-w-none ${isStreaming ? 'streaming-markdown' : ''}`} style={{ color: 'var(--color-text-primary)' }}>
+        <div className={`prose prose-sm prose-invert max-w-none whitespace-pre-wrap ${isStreaming ? 'streaming-markdown' : ''}`} style={{ color: 'var(--color-text-primary)' }}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {isUser ? message.content : displayedText}
           </ReactMarkdown>
@@ -95,7 +95,7 @@ export default function MessageBubble({ message }: Props) {
         )}
         <div className="flex justify-end items-center gap-1 mt-1.5 opacity-50">
           <p className="text-[10px] select-none text-text-secondary">
-            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
           {isUser && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>

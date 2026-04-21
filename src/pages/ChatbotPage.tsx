@@ -17,35 +17,52 @@ import { Bot, Trash2 } from 'lucide-react';
 import MessageBubble from '../components/MessageBubble';
 import ChatInput from '../components/ChatInput';
 import ContextHeader from '../components/ContextHeader';
-import AnimatedButton from '../components/AnimatedButton';
 import { useChatbot } from '../hooks/useChatbot';
-import { useMedicineContext } from '../context/MedicineContext';
+import { useAppStore } from '../ai/contextManager';
 import { getMedicineById } from '../db/database';
-
 import SuggestionChips from '../components/chat/SuggestionChips';
 
 export default function ChatbotPage() {
-  const [searchParams]   = useSearchParams();
-  const { currentMedicine, setCurrentMedicine } = useMedicineContext();
-  const [medicine, setMedicine] = useState(currentMedicine);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeMedicine = useAppStore(state => state.activeMedicine);
+  const setActiveMedicine = useAppStore(state => state.setActiveMedicine);
   const [showActions, setShowActions] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const medId = searchParams.get('medicineId');
-    if (medId && (!currentMedicine || currentMedicine.id !== parseInt(medId, 10))) {
+    const medIdStr = searchParams.get('medicineId');
+    const urlId = medIdStr ? parseInt(medIdStr, 10) : null;
+    
+    // If URL has an ID but activeMedicine is different, load it
+    if (urlId && (!activeMedicine || activeMedicine.id !== urlId)) {
       (async () => {
-        const m = await getMedicineById(parseInt(medId, 10));
-        if (m) { setMedicine(m); setCurrentMedicine(m); }
+        const m = await getMedicineById(urlId);
+        if (m) { setActiveMedicine(m); }
       })();
-    } else {
-      setMedicine(currentMedicine);
+    } 
+    // If activeMedicine exists but URL is out of sync, update URL
+    else if (activeMedicine && activeMedicine.id !== urlId) {
+      setSearchParams({ medicineId: activeMedicine.id.toString() }, { replace: true });
     }
-  }, [searchParams, currentMedicine, setCurrentMedicine]);
+    // If activeMedicine is null but URL has ID, clear URL
+    else if (!activeMedicine && urlId) {
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, activeMedicine, setActiveMedicine, setSearchParams]);
 
   const { messages, isTyping, sendMessage, clearMessages } = useChatbot();
   const lastBotMsg = [...messages].reverse().find(m => m.role === 'bot');
-  const dynamicChips = lastBotMsg?.chips || [];
+  
+  // If we have an active medicine, dynamically generate context-aware chips
+  // prioritizing them over the static welcome chips
+  const dynamicChips = activeMedicine && messages.length <= 1
+    ? [
+        `Dosage for ${activeMedicine.brand_name}?`,
+        `Side effects of ${activeMedicine.brand_name}?`,
+        `Is ${activeMedicine.brand_name} safe for pregnancy?`,
+        `Interactions`
+      ]
+    : lastBotMsg?.chips || [];
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -53,10 +70,7 @@ export default function ChatbotPage() {
 
   const handleSend = (text: string) => {
     setShowActions(false);
-    sendMessage(text, medicine, (newMed) => {
-      setMedicine(newMed);
-      setCurrentMedicine(newMed);
-    });
+    sendMessage(text);
   };
 
   return (
@@ -64,7 +78,7 @@ export default function ChatbotPage() {
       
       {/* ── Context Header ──────────────────────────────────────────────────── */}
       <ContextHeader 
-        medicine={medicine} 
+        medicine={activeMedicine} 
         showDetails={showActions} 
         onToggleDetails={() => setShowActions(a => !a)} 
       />
@@ -79,7 +93,7 @@ export default function ChatbotPage() {
             <p className="text-sm font-semibold truncate text-white">
               MedScan Assistant
             </p>
-            {!medicine && (
+            {!activeMedicine && (
               <p className="text-[11px] text-text-secondary">
                 Type any medicine name to begin
               </p>
@@ -126,7 +140,7 @@ export default function ChatbotPage() {
 
         {/* Dynamic suggestion chips */}
         <SuggestionChips 
-          activeMedicine={medicine} 
+          activeMedicine={activeMedicine} 
           isTyping={isTyping} 
           onSend={handleSend} 
           dynamicChips={dynamicChips} 

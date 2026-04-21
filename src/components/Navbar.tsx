@@ -1,13 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Home, Pill, MessageCircle, Navigation } from 'lucide-react';
+import { Menu, X, Home, MessageCircle, Navigation, ArrowLeft } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const navLinks = [
     { label: 'Home', path: '/', icon: Home },
@@ -15,24 +23,33 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full" style={{ background: 'rgba(15, 17, 21, 0.75)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--color-surface-border)' }}>
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
+    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled ? 'bg-[#0f1115]/95 backdrop-blur-xl shadow-lg border-b border-surface-border' : 'bg-[#0A0E1A] border-b border-transparent'}`}>
+      <div className={`w-full px-4 transition-all duration-300 flex items-center justify-between gap-4 ${searchFocused ? 'h-20' : 'h-16'}`}>
         
-        {/* Left: Logo */}
-        <div className="flex-shrink-0 cursor-pointer flex items-center gap-2" onClick={() => navigate('/')}>
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#7DD8F0] to-[#4ECDC4]">
-            <Navigation size={18} color="#000" />
+        {/* Left: Logo & Back Button */}
+        <div className="flex items-center gap-3 flex-shrink-0 z-10 w-1/4">
+          {location.pathname !== '/' && (
+            <button onClick={() => navigate(-1)} className="p-2 rounded-xl text-text-secondary hover:text-white hover:bg-white/10 transition-colors hidden sm:block">
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <div className="cursor-pointer flex items-center gap-2" onClick={() => navigate('/')}>
+            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#7DD8F0] to-[#4ECDC4]">
+              <Navigation size={18} color="#000" />
+            </div>
+            <span className="text-lg font-bold tracking-wide hidden sm:block" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-primary)' }}>
+              MedScan+
+            </span>
           </div>
-          <span className="text-lg font-bold tracking-wide hidden sm:block" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-primary)' }}>
-            MedScan+
-          </span>
         </div>
 
-        {/* Center: Global Search Bar */}
-        <GlobalSearch />
+        {/* Center: Global Search Bar (Absolutely Centered) */}
+        <div className={`absolute left-1/2 -translate-x-1/2 w-full max-w-[500px] transition-all duration-300 z-20 ${searchFocused ? 'scale-[1.02]' : ''}`}>
+          <GlobalSearch onFocusChange={setSearchFocused} />
+        </div>
 
         {/* Right: Desktop Links */}
-        <nav className="hidden md:flex items-center gap-1 flex-shrink-0">
+        <nav className="hidden md:flex items-center justify-end gap-1 flex-shrink-0 z-10 w-1/4">
           {navLinks.map(link => {
             const active = location.pathname === link.path;
             const Icon = link.icon;

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 import { getMedicineById } from '../db/database';
-import { useMedicineContext } from '../context/MedicineContext';
+import { useAppStore } from '../ai/contextManager';
 import { Medicine } from '../types/medicine';
 import { enrichMedicine, type EnrichedMedicine } from '../utils/data-enricher';
 
@@ -113,18 +113,19 @@ function DetailSkeleton() {
 export default function MedicineDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentMedicine, setCurrentMedicine } = useMedicineContext();
-  const [medicine, setMedicine] = useState<Medicine | null>(currentMedicine);
+  const activeMedicine = useAppStore(state => state.activeMedicine);
+  const setActiveMedicine = useAppStore(state => state.setActiveMedicine);
+  const [medicine, setMedicine] = useState<Medicine | null>(activeMedicine);
   const [enriched, setEnriched] = useState<EnrichedMedicine | null>(
-    currentMedicine ? enrichMedicine(currentMedicine) : null
+    activeMedicine ? enrichMedicine(activeMedicine) : null
   );
 
   useEffect(() => {
     if (!id) return;
     const numId = parseInt(id, 10);
-    if (currentMedicine?.id === numId) {
-      setMedicine(currentMedicine);
-      setEnriched(enrichMedicine(currentMedicine));
+    if (activeMedicine?.id === numId) {
+      setMedicine(activeMedicine);
+      setEnriched(enrichMedicine(activeMedicine));
       return;
     }
     (async () => {
@@ -132,12 +133,12 @@ export default function MedicineDetailPage() {
       if (m) {
         setMedicine(m);
         setEnriched(enrichMedicine(m));
-        setCurrentMedicine(m);
+        setActiveMedicine(m);
       } else {
         navigate('/');
       }
     })();
-  }, [id, currentMedicine, navigate, setCurrentMedicine]);
+  }, [id, activeMedicine, navigate, setActiveMedicine]);
 
   if (!medicine || !enriched) return <DetailSkeleton />;
 
@@ -263,7 +264,7 @@ export default function MedicineDetailPage() {
 
           {/* 8. Availability & Substitutes */}
           <Section title="Availability & Substitutes" icon={ShoppingBag} color="#3498DB">
-            <Row label="Schedule" value="Prescription only (Schedule H) — unless available OTC" />
+            <Row label="Schedule" value="Prescription only (Schedule H) - unless available OTC" />
             <Row label="Availability" value="Available at most licensed pharmacies across India." />
             {e.substitutes.length > 0 && (
               <div className="mt-3">

@@ -16,7 +16,7 @@ export default function MainLayout() {
   return (
     <div className="flex flex-col min-h-dvh">
       <Navbar />
-      <div className="flex flex-1 max-w-7xl mx-auto w-full relative">
+      <div className="flex flex-1 w-full relative">
         <Sidebar />
         <main className="flex-1 w-full min-w-0">
           <Suspense fallback={<PageLoader />}>
