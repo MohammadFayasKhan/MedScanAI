@@ -139,6 +139,7 @@ export interface DatabaseActions {
   switchMedicineContext: () => void;
   clearChatAndContext: () => void;
   clearAllChatSessions: () => void;
+  deleteChatSession: (sessionId: string) => void;
 }
 
 export type MedScanStore = MedScanDatabaseState & DatabaseActions;
@@ -506,22 +507,8 @@ export const useAppStore = create<MedScanStore>()(
 
       startNewChatSession: (medicineId, type = 'general') => {
         const state = get();
-        const hasMessages = state.currentChatSession.messages.length > 0;
-        const previousChatSessions = hasMessages
-          ? [...state.previousChatSessions.slice(-(MAX_SESSION_HISTORY - 1)), state.currentChatSession]
-          : state.previousChatSessions;
-
-        set({
-          currentChatSession: createNewChatSession(medicineId ?? null, type),
-          previousChatSessions,
-        });
-        get().saveToStorage();
-      },
-
-      clearChatSession: () => {
-        const state = get();
-        const hasMessages = state.currentChatSession.messages.length > 0;
-        const previousChatSessions = hasMessages
+        // Only save previous if it had real messages
+        const previousChatSessions = sessionHasRealMessages(state.currentChatSession)
           ? [...state.previousChatSessions.slice(-(MAX_SESSION_HISTORY - 1)), state.currentChatSession]
           : state.previousChatSessions;
 
@@ -534,9 +521,43 @@ export const useAppStore = create<MedScanStore>()(
         };
 
         set({
-          activeMedicineId: null,
+          currentChatSession: { ...createNewChatSession(medicineId ?? null, type), messages: [welcome] },
+          previousChatSessions,
+        });
+        get().saveToStorage();
+      },
+
+      clearChatSession: () => {
+        const state = get();
+        const previousChatSessions = sessionHasRealMessages(state.currentChatSession)
+          ? [...state.previousChatSessions.slice(-(MAX_SESSION_HISTORY - 1)), state.currentChatSession]
+          : state.previousChatSessions;
+
+        const welcome: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: formatWelcomeMessage(),
+          timestamp: now(),
+          metadata: { type: 'welcome' },
+        };
+
+        set({
           currentChatSession: { ...createNewChatSession(null, 'general'), messages: [welcome] },
           previousChatSessions,
+        });
+        get().saveToStorage();
+      },
+
+      deleteChatSession: (sessionId) => {
+        const state = get();
+        // If deleting current session, clear it completely
+        if (state.currentChatSession.id === sessionId) {
+          get().clearChatAndContext();
+          return;
+        }
+        // Otherwise, remove from previous sessions
+        set({
+          previousChatSessions: state.previousChatSessions.filter(s => s.id !== sessionId)
         });
         get().saveToStorage();
       },

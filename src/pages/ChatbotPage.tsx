@@ -223,6 +223,7 @@ export default function ChatbotPage() {
   const activeMedicineId       = useAppStore(s => s.activeMedicineId);
   const setActiveMedicine      = useAppStore(s => s.setActiveMedicine);
   const clearAllChatSessions    = useAppStore(s => s.clearAllChatSessions);
+  const deleteChatSession       = useAppStore(s => s.deleteChatSession);
   const clearChatAndContext     = useAppStore(s => s.clearChatAndContext);
   const clearAllMessages        = useAppStore(s => s.clearAllMessages);
   void clearAllMessages; // kept for future use
@@ -251,7 +252,7 @@ export default function ChatbotPage() {
     if (urlId && (!activeMedicine || activeMedicine.id !== urlId)) {
       const numId = parseInt(urlId, 10);
       if (Number.isFinite(numId)) {
-        ensureMedicineInStoreById(numId, true).then(m => {
+        ensureMedicineInStoreById(numId, false).then(m => {
           if (m) setActiveMedicine(m.id, { clearChat: true });
         });
       } else {
@@ -287,12 +288,10 @@ export default function ChatbotPage() {
     else setSearchParams({}, { replace: true });
   }, [switchChatSession, setActiveMedicine, setSearchParams]);
 
-  const handleDeleteSession = useCallback((_sessionId: string) => {
-    // For simplicity: if deleting current session, just clear it
-    // Session removal from previousChatSessions is handled by clearChatAndContext
-    clearChatAndContext();
+  const handleDeleteSession = useCallback((sessionId: string) => {
+    deleteChatSession(sessionId);
     pushToast('Chat deleted', 'success');
-  }, [clearChatAndContext, pushToast]);
+  }, [deleteChatSession, pushToast]);
 
   const handleClearAll = useCallback(() => {
     clearAllChatSessions();

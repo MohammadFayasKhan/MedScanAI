@@ -10,6 +10,7 @@ import LoadingOverlay from '../components/LoadingOverlay';
 import { useOCR } from '../hooks/useOCR';
 import { useDatabaseContext } from '../context/DatabaseContext';
 import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
+import { useAppStore } from '../store/useAppStore';
 
 const FEATURES = [
   { icon: 'dataset',        title: 'Massive Database',   desc: '192K+ medicines indexed offline' },
@@ -37,7 +38,8 @@ export default function HomePage() {
     setShowScanner(false);
     const medicine = await scanImage(src);
     if (medicine) {
-      ensureMedicineInStoreFromDb(medicine, true);
+      ensureMedicineInStoreFromDb(medicine, false);
+      useAppStore.getState().addToRecent(String(medicine.id));
       navigate(`/medicine/${medicine.id}`);
     } else {
       showToast(ocrError || 'Medicine not found. Try searching manually.');

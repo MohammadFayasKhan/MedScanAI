@@ -17,6 +17,7 @@ import {
 import type { Medicine } from '../types/medicine';
 import { getMedicineById, addToHistory } from '../db/database';
 import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
+import { useAppStore } from '../store/useAppStore';
 
 const NOT_SPECIFIED = 'Not specified in this dataset for this medicine.';
 const INTERACTION_SAFETY_NOTE =
@@ -156,7 +157,8 @@ export default function MedicineDetailPage() {
       }
 
       setMedicine(m);
-      ensureMedicineInStoreFromDb(m, true);
+      ensureMedicineInStoreFromDb(m, false);
+      useAppStore.getState().addToRecent(String(m.id));
       addToHistory(m.id, m.brand_name, 'manual');
       setIsLoading(false);
     };

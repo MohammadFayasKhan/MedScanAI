@@ -98,8 +98,8 @@ export default function KnowledgeBasePage() {
           </h1>
           <p className="text-metadata text-on-surface-variant mt-xs">
             {isReady
-              ? `${medicineCount.toLocaleString()} medicines indexed offline — click any card for full details`
-              : 'Loading database…'}
+              ? `${medicineCount.toLocaleString()} medicines indexed offline - click any card for full details`
+              : 'Loading database...'}
           </p>
         </motion.div>
 

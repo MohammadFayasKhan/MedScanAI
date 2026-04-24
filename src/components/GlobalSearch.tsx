@@ -5,6 +5,7 @@ import { Search } from 'lucide-react';
 import type { Medicine } from '../types/medicine';
 import { searchMedicines, addToHistory } from '../db/database';
 import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
+import { useAppStore } from '../store/useAppStore';
 
 interface GlobalSearchProps {
   onFocusChange?: (focused: boolean) => void;
@@ -53,7 +54,8 @@ export default function GlobalSearch({ onFocusChange }: GlobalSearchProps) {
 
   const handleSelectMedicine = (med: Medicine) => {
     console.log('[MedScan] selected medicine from search', { medicineId: med.id, name: med.brand_name });
-    ensureMedicineInStoreFromDb(med, true);
+    ensureMedicineInStoreFromDb(med, false);
+    useAppStore.getState().addToRecent(String(med.id));
     addToHistory(med.id, med.brand_name, 'manual');
     setShowDropdown(false);
     setQuery('');
