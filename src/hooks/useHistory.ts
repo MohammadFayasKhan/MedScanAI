@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Scan History Hook
+ * MedScanAI : Scan History Hook
  * Persists medicine scan history in localStorage.
  */
 import { useState, useCallback } from 'react';

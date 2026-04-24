@@ -1,5 +1,5 @@
 /**
- * MedScan+ : HistoryPage (design-token compliant)
+ * MedScanAI : HistoryPage (design-token compliant)
  * Matches history panel mockup: surface-container rows, border-l primary-container for active
  */
 import { useState } from 'react';

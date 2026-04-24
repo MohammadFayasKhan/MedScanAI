@@ -28,8 +28,8 @@ export default defineConfig({
         ],
       },
       manifest: {
-        name: 'MedScan+',
-        short_name: 'MedScan+',
+        name: 'MedScanAI',
+        short_name: 'MedScanAI',
         description: 'Fully offline medical reference — scan, search, and explore medicines',
         theme_color: '#000000',
         background_color: '#000000',

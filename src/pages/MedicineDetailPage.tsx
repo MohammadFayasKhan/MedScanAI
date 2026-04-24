@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Medicine Detail Page (Offline Store)
+ * MedScanAI : Medicine Detail Page (Offline Store)
  *
  * Uses the centralized Zustand store as the source of truth.
  * This guarantees consistency with Recent/Pinned/Chat state.

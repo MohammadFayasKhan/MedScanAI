@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Knowledge Base
+ * MedScanAI : Knowledge Base
  * Structured offline mapping for symptoms, intents, and query normalization.
  */
 

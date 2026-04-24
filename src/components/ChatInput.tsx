@@ -1,5 +1,5 @@
 /**
- * MedScan+ V3 : Chat Input
+ * MedScanAI V3 : Chat Input
  * Sticky glassmorphic input bar with send button and Enter key support.
  */
 import { useState, KeyboardEvent } from 'react';

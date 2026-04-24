@@ -1,5 +1,5 @@
 /**
- * MedScan+ : HomePage  (design-token compliant)
+ * MedScanAI : HomePage  (design-token compliant)
  * bg-background, surface-container cards, primary-container CTA
  */
 import { useRef, useState } from 'react';

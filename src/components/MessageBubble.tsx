@@ -1,7 +1,10 @@
 /**
- * MedScan+ : MessageBubble with Streaming Text Effect
- * Bot messages stream character-by-character with a blinking cursor.
+ * MedScanAI : MessageBubble with Streaming Text Effect
+ * Bot messages stream word-by-word with a blinking cursor.
  * User messages render instantly.
+ *
+ * Markdown rendered with explicit dark-mode prose overrides so
+ * bold text, bullets, and headers are clearly visible.
  */
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
@@ -10,8 +13,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { Message } from '../store/useAppStore';
 
-interface Props { 
-  message: Message; 
+interface Props {
+  message: Message;
   animate?: boolean;
   onStreamChange?: (isStreaming: boolean) => void;
 }
@@ -20,11 +23,9 @@ export default function MessageBubble({ message, animate = true, onStreamChange 
   const isUser = message.role === 'user';
   const [displayedText, setDisplayedText] = useState(isUser || !animate ? message.content : '');
   const [isStreaming, setIsStreaming] = useState(!isUser && animate);
-  
+
   useEffect(() => {
-    if (onStreamChange) {
-      onStreamChange(isStreaming);
-    }
+    if (onStreamChange) onStreamChange(isStreaming);
   }, [isStreaming, onStreamChange]);
 
   const [isDelivered, setIsDelivered] = useState(false);
@@ -33,9 +34,7 @@ export default function MessageBubble({ message, animate = true, onStreamChange 
 
   useEffect(() => {
     if (isUser || !animate) {
-      if (isUser) {
-        setTimeout(() => setIsDelivered(true), 400); // Simulate network delay for read receipt
-      }
+      if (isUser) setTimeout(() => setIsDelivered(true), 400);
       return;
     }
     const fullText = message.content;
@@ -44,85 +43,86 @@ export default function MessageBubble({ message, animate = true, onStreamChange 
     setIsStreaming(true);
 
     const stream = () => {
-      // Stream word-by-word (find next space or punctuation)
       let nextSpace = fullText.indexOf(' ', indexRef.current + 1);
       if (nextSpace === -1) nextSpace = fullText.length;
-      
+
       const chunk = fullText.slice(indexRef.current, nextSpace);
       indexRef.current = nextSpace;
-      
+
       if (indexRef.current >= fullText.length) {
         setDisplayedText(fullText);
         setIsStreaming(false);
         return;
       }
-      
+
       setDisplayedText(fullText.slice(0, indexRef.current));
-      
-      // Pause longer for paragraphs/newlines, otherwise ~35ms per word
       const delay = chunk.includes('\n') ? 150 : 35;
       timerRef.current = setTimeout(stream, delay);
     };
 
     timerRef.current = setTimeout(stream, 60);
-
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [message.content, isUser, animate]);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12, scale: 0.97 }}
+      initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className={`flex mb-lg ${isUser ? 'justify-end' : 'justify-start'}`}
+      className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}
     >
-      {/* Bot avatar : matches mockup: w-8 h-8 rounded bg-surface-container border border-surface-variant */}
+      {/* Bot avatar */}
       {!isUser && (
         <div
-          className="flex-shrink-0 w-8 h-8 rounded border border-surface-variant
-                     flex items-center justify-center mr-md self-start mt-xs"
-          style={{ background: 'var(--surface-container)' }}
+          className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-md self-start mt-xs"
+          style={{
+            background: 'var(--surface-container-high)',
+            border: '1px solid var(--surface-variant)',
+          }}
         >
           <span
-            className="material-symbols-outlined text-primary-container"
-            style={{ fontSize: 14, fontVariationSettings: "'FILL' 1" }}
+            className="material-symbols-outlined"
+            style={{
+              fontSize: 18,
+              color: 'var(--primary-container)',
+              fontVariationSettings: "'FILL' 1",
+            }}
           >
-            biotech
+            coronavirus
           </span>
         </div>
       )}
 
       <div
-        className="max-w-[85%] sm:max-w-[75%] px-md py-sm rounded-xl text-body leading-relaxed"
+        className={`max-w-[85%] sm:max-w-[75%] rounded-xl ${isUser ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
         style={{
-          background: isUser ? 'var(--surface-container-high)' : 'var(--surface-container)',
-          border: `1px solid var(--${isUser ? 'surface-variant' : 'outline-variant'})`,
-          borderTopRightRadius: isUser ? 4 : undefined,
-          borderTopLeftRadius: !isUser ? 4 : undefined,
+          background: isUser ? 'var(--surface-container)' : 'var(--surface-container)',
+          border: '1px solid var(--surface-variant)',
           color: 'var(--on-surface)',
           wordBreak: 'break-word',
+          padding: '12px 16px',
         }}
       >
-        <div
-          className={`prose prose-sm max-w-none whitespace-pre-wrap ${isStreaming ? 'streaming-markdown' : ''}`}
-          style={{ color: 'var(--on-surface)' }}
-        >
+        {/* Markdown content with explicit dark-mode styling */}
+        <div className={`medscan-markdown leading-relaxed ${isStreaming ? 'streaming-markdown' : ''}`}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {isUser ? message.content : displayedText}
           </ReactMarkdown>
         </div>
+
+        {/* Streaming cursor */}
         {isStreaming && (
           <span
             className="inline-block w-[2px] h-[14px] ml-0.5 align-middle animate-pulse"
-            style={{ background: 'var(--primary-container)', borderRadius: 1, marginTop: '-4px' }}
+            style={{ background: 'var(--primary-container)', borderRadius: 1 }}
           />
         )}
-        <div className="flex justify-end items-center gap-xs mt-xs opacity-50">
-          <p className="text-metadata" style={{ color: 'var(--on-surface-variant)' }}>
+
+        {/* Timestamp + delivery status */}
+        <div className="flex justify-end items-center gap-xs mt-sm opacity-40">
+          <span style={{ fontSize: 10, color: 'var(--on-surface-variant)' }}>
             {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </p>
+          </span>
           {isUser && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {isDelivered

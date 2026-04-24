@@ -138,6 +138,7 @@ export interface DatabaseActions {
   // Special UI actions (requested)
   switchMedicineContext: () => void;
   clearChatAndContext: () => void;
+  clearAllChatSessions: () => void;
 }
 
 export type MedScanStore = MedScanDatabaseState & DatabaseActions;
@@ -179,15 +180,24 @@ function createNewChatSession(
 
 function formatWelcomeMessage(): string {
   return [
-    "Hi! I'm your MedScan medicine assistant.",
+    "Hi! I'm your MedScanAI medicine assistant.",
     '',
     'I can help you:',
-    '• Find information about a medicine',
-    '• Answer questions about dosage, side effects, interactions, and safety',
-    '• Suggest medicines commonly used for symptoms like fever or headache',
+    '',
+    '- Find information about any medicine by name, generic, or composition',
+    '- Answer questions about dosage, side effects, interactions, and safety',
+    '- Suggest medicines commonly used for symptoms like fever or headache',
     '',
     'What would you like to know?',
   ].join('\n');
+}
+
+/** Returns true if a session has meaningful user/AI messages (not just the auto welcome) */
+function sessionHasRealMessages(session: ChatSession): boolean {
+  const nonWelcome = session.messages.filter(
+    m => !(m.role === 'assistant' && m.metadata?.type === 'welcome')
+  );
+  return nonWelcome.length > 0;
 }
 
 type PersistedV2 = {
@@ -885,7 +895,8 @@ export const useAppStore = create<MedScanStore>()(
 
       clearChatAndContext: () => {
         const state = get();
-        if (state.currentChatSession.messages.length > 0) {
+        // Only archive current session if it has real (non-welcome) messages
+        if (sessionHasRealMessages(state.currentChatSession)) {
           set({
             previousChatSessions: [
               ...state.previousChatSessions.slice(-(MAX_SESSION_HISTORY - 1)),
@@ -909,6 +920,22 @@ export const useAppStore = create<MedScanStore>()(
 
         set({ isSearchFocused: true });
         setTimeout(focusGlobalSearch, 50);
+        get().saveToStorage();
+      },
+
+      clearAllChatSessions: () => {
+        const welcomeMessage: Message = {
+          id: generateId(),
+          role: 'assistant',
+          content: formatWelcomeMessage(),
+          timestamp: now(),
+          metadata: { type: 'welcome' },
+        };
+        set({
+          previousChatSessions: [],
+          currentChatSession: { ...createNewChatSession(null, 'general'), messages: [welcomeMessage] },
+          activeMedicineId: null,
+        });
         get().saveToStorage();
       },
     }),

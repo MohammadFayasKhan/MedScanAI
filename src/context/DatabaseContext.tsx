@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Database Context
+ * MedScanAI : Database Context
  * Initialises the Web Worker once and exposes isReady + progressMsg.
  */
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';

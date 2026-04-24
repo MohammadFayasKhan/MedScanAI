@@ -1,5 +1,5 @@
 /**
- * MedScan+ V4 : Medical Data Enrichment Engine
+ * MedScanAI V4 : Medical Data Enrichment Engine
  *
  * Problem: The CSV only has 8 columns, leaving 20+ Medicine fields blank.
  * Solution: Parse the composition string + infer from drug class to generate

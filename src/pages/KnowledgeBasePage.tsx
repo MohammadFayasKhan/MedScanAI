@@ -1,11 +1,13 @@
 /**
- * MedScan+ : Medicine Library (design-token compliant)
- * bg-background, surface-container cards, primary-container accents
+ * MedScanAI : Medicine Library
+ * Search uses the full DB worker index (searchMedicines) for queries
+ * so all 192K+ medicines are searched, not just the paginated 60.
+ * Category filter + paginated browsing remain for non-search mode.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getAllMedicines } from '../db/database';
+import { getAllMedicines, searchMedicines } from '../db/database';
 import { Medicine } from '../types/medicine';
 import { useDatabaseContext } from '../context/DatabaseContext';
 
@@ -28,7 +30,11 @@ export default function KnowledgeBasePage() {
   const [loading,  setLoading]  = useState(false);
   const [hasMore,  setHasMore]  = useState(true);
 
-  const load = useCallback(async (off: number, cat: string, replace: boolean) => {
+  // Track in-flight search to debounce
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /* ── Paginated browsing (no query) ────────────────────────── */
+  const loadPage = useCallback(async (off: number, cat: string, replace: boolean) => {
     if (!isReady) return;
     setLoading(true);
     try {
@@ -45,18 +51,41 @@ export default function KnowledgeBasePage() {
     }
   }, [isReady]);
 
-  useEffect(() => {
-    setOffset(0); setMeds([]); setHasMore(true);
-    load(0, category, true);
-  }, [category, isReady, load]);
+  /* ── Full-index search (with query) ───────────────────────── */
+  const runSearch = useCallback(async (q: string) => {
+    if (!isReady || !q.trim()) return;
+    setLoading(true);
+    setHasMore(false);
+    try {
+      const results = await searchMedicines(q.trim());
+      setMeds(results);
+      setTotal(results.length);
+    } finally {
+      setLoading(false);
+    }
+  }, [isReady]);
 
-  const displayed = query.trim()
-    ? meds.filter(m =>
-        m.brand_name.toLowerCase().includes(query.toLowerCase()) ||
-        (m.active_substance || '').toLowerCase().includes(query.toLowerCase()) ||
-        (m.category || '').toLowerCase().includes(query.toLowerCase())
-      )
-    : meds;
+  /* Category change → reload paginated */
+  useEffect(() => {
+    if (query.trim()) return; // search overrides category
+    setOffset(0); setMeds([]); setHasMore(true);
+    loadPage(0, category, true);
+  }, [category, isReady, loadPage, query]);
+
+  /* Debounced search as user types */
+  useEffect(() => {
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    if (!query.trim()) {
+      // Back to browsing mode
+      setOffset(0); setMeds([]); setHasMore(true);
+      loadPage(0, category, true);
+      return;
+    }
+    searchTimer.current = setTimeout(() => runSearch(query), 280);
+    return () => { if (searchTimer.current) clearTimeout(searchTimer.current); };
+  }, [query, runSearch, loadPage, category]);
+
+  const displayed = meds;
 
   return (
     <div className="flex-1 flex flex-col" style={{ background: 'var(--background)' }}>
@@ -69,14 +98,14 @@ export default function KnowledgeBasePage() {
           </h1>
           <p className="text-metadata text-on-surface-variant mt-xs">
             {isReady
-              ? `${medicineCount.toLocaleString()} medicines indexed offline : click any card for full details`
+              ? `${medicineCount.toLocaleString()} medicines indexed offline — click any card for full details`
               : 'Loading database…'}
           </p>
         </motion.div>
 
         {/* ── Search ─────────────────────────────────────────── */}
         <div
-          className="flex items-center gap-sm px-md rounded-xl border transition-colors input-focus"
+          className="flex items-center gap-sm px-md rounded-xl border transition-all input-focus"
           style={{
             background: 'var(--surface-container)',
             borderColor: 'var(--surface-variant)',
@@ -91,47 +120,73 @@ export default function KnowledgeBasePage() {
             type="search"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search name, composition, category…"
+            placeholder="Search by brand name, generic, composition, symptom or category…"
             aria-label="Search medicine library"
             className="flex-1 bg-transparent border-none focus:ring-0 text-on-surface
                        text-body placeholder-on-surface-variant outline-none py-sm"
             style={{ fontFamily: 'inherit' }}
           />
-          {query && (
+          {loading && (
+            <div className="flex gap-xs flex-shrink-0">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+            </div>
+          )}
+          {query && !loading && (
             <button
               onClick={() => setQuery('')}
-              className="text-on-surface-variant hover:text-on-surface transition-colors"
+              className="text-on-surface-variant hover:text-on-surface transition-colors flex-shrink-0"
+              aria-label="Clear search"
             >
               <span className="material-symbols-outlined" style={{ fontSize: 18 }}>close</span>
             </button>
           )}
         </div>
 
-        {/* ── Category chips ──────────────────────────────────── */}
-        <div className="flex gap-xs flex-wrap" role="group" aria-label="Filter by category">
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat}
-              id={`cat-${cat.toLowerCase()}`}
-              onClick={() => setCategory(cat)}
-              className="transition-all duration-150"
-              style={{
-                background: category === cat ? 'var(--primary-container)' : 'var(--surface-container)',
-                color: category === cat ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
-                border: `1px solid ${category === cat ? 'var(--primary-container)' : 'var(--outline-variant)'}`,
-                borderRadius: 9999,
-                padding: '4px 14px',
-                fontSize: 12,
-                fontWeight: category === cat ? 600 : 400,
-                cursor: 'pointer',
-              }}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
+        {/* Search tips when empty */}
+        {!query && !loading && (
+          <div className="flex flex-wrap gap-xs -mt-sm">
+            <span className="text-metadata text-on-surface-variant">Try:</span>
+            {['paracetamol', 'fever', 'amoxicillin', 'antibiotic', 'omeprazole'].map(term => (
+              <button
+                key={term}
+                onClick={() => setQuery(term)}
+                className="chip"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        )}
 
-        {/* ── Count ──────────────────────────────────────────── */}
+        {/* ── Category chips (browse mode only) ───────────────── */}
+        {!query.trim() && (
+          <div className="flex gap-xs flex-wrap" role="group" aria-label="Filter by category">
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                id={`cat-${cat.toLowerCase()}`}
+                onClick={() => setCategory(cat)}
+                className="transition-all duration-150"
+                style={{
+                  background: category === cat ? 'var(--primary-container)' : 'var(--surface-container)',
+                  color: category === cat ? 'var(--on-primary-container)' : 'var(--on-surface-variant)',
+                  border: `1px solid ${category === cat ? 'var(--primary-container)' : 'var(--outline-variant)'}`,
+                  borderRadius: 9999,
+                  padding: '4px 14px',
+                  fontSize: 12,
+                  fontWeight: category === cat ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* ── Result count ────────────────────────────────────── */}
         {!loading && (
           <p className="text-metadata text-on-surface-variant -mt-sm">
             {query.trim()
@@ -140,7 +195,7 @@ export default function KnowledgeBasePage() {
           </p>
         )}
 
-        {/* ── Grid ───────────────────────────────────────────── */}
+        {/* ── Grid ────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-sm">
           <AnimatePresence mode="popLayout">
             {loading && meds.length === 0
@@ -153,7 +208,7 @@ export default function KnowledgeBasePage() {
                     layout
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: (i % PAGE_SIZE) * 0.012 }}
+                    transition={{ delay: (i % PAGE_SIZE) * 0.008 }}
                     id={`med-card-${med.id}`}
                     onClick={() => navigate(`/medicine/${med.id}`)}
                     className="text-left rounded-xl border p-md flex flex-col gap-xs card-lift"
@@ -181,12 +236,12 @@ export default function KnowledgeBasePage() {
                       </span>
                     </div>
 
-                    {/* Name */}
+                    {/* Name — highlight matched query */}
                     <p className="text-body font-semibold text-on-surface line-clamp-2 leading-snug">
                       {med.brand_name}
                     </p>
 
-                    {/* Composition */}
+                    {/* Composition / generic */}
                     {med.active_substance && (
                       <p className="text-metadata text-on-surface-variant line-clamp-2">
                         {med.active_substance}
@@ -206,7 +261,7 @@ export default function KnowledgeBasePage() {
           </AnimatePresence>
         </div>
 
-        {/* ── Empty state ─────────────────────────────────────── */}
+        {/* ── Empty state ──────────────────────────────────────── */}
         {!loading && displayed.length === 0 && (
           <div className="flex flex-col items-center py-16 gap-md text-center">
             <span className="material-symbols-outlined text-on-surface-variant" style={{ fontSize: 48 }}>
@@ -216,10 +271,15 @@ export default function KnowledgeBasePage() {
             <p className="text-metadata text-on-surface-variant">
               Try a different search term or category.
             </p>
+            {query && (
+              <button className="glass-button px-md py-sm text-sm" onClick={() => setQuery('')}>
+                Clear search
+              </button>
+            )}
           </div>
         )}
 
-        {/* ── Load more ───────────────────────────────────────── */}
+        {/* ── Load more (browse mode only) ─────────────────────── */}
         {hasMore && !query.trim() && meds.length > 0 && (
           <div className="flex justify-center pb-lg">
             <button
@@ -227,7 +287,7 @@ export default function KnowledgeBasePage() {
               onClick={() => {
                 const next = offset + PAGE_SIZE;
                 setOffset(next);
-                load(next, category, false);
+                loadPage(next, category, false);
               }}
               disabled={loading}
               className="flex items-center gap-sm px-lg py-sm rounded-xl text-body

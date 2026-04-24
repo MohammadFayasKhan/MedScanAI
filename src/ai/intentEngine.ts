@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Intent Engine
+ * MedScanAI : Intent Engine
  * Detects the user's intent from their message to guide response formatting.
  */
 

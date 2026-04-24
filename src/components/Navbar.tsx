@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Navbar  (matches mockup header exactly)
+ * MedScanAI : Navbar  (matches mockup header exactly)
  * bg: bg-background | border-b border-surface-variant | h-16
  * Logo: primary-container, uppercase, tracking-tighter, font-black
  * Right: Chat/Think mode pill + notifications + avatar
@@ -77,9 +77,9 @@ export default function Navbar() {
             onClick={() => navigate('/')}
             className="font-heading text-heading font-black text-primary-container
                        tracking-tighter uppercase select-none hover:opacity-80 transition-opacity"
-            aria-label="MedScan+ Home"
+            aria-label="MedScanAI Home"
           >
-            MedScan+
+            MedScanAI
           </button>
 
           {/* Desktop nav links */}

@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Dynamic Response Builder
+ * MedScanAI : Dynamic Response Builder
  * Formats responses naturally with markdown lists.
  */
 import { Medicine } from '../types/medicine';

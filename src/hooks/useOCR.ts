@@ -1,5 +1,5 @@
 /**
- * MedScan+ : OCR Hook
+ * MedScanAI : OCR Hook
  * Uses Tesseract.js + the ocr-cleaner utilities to accurately extract
  * medicine names from scanned images and match them against the DB.
  */

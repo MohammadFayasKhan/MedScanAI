@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Search Ranking & Fuzzy Search Utilities
+ * MedScanAI : Search Ranking & Fuzzy Search Utilities
  * 
  * Implements token-based matching and Levenshtein distance for fuzzy search.
  */

@@ -1,5 +1,5 @@
 /**
- * MedScan+ : App Router (Medicine-first architecture)
+ * MedScanAI : App Router (Medicine-first architecture)
  * Routes: Home, Chat, MedicineDetail, History, KnowledgeBase (Medicine Library)
  */
 import { lazy, Suspense } from 'react';

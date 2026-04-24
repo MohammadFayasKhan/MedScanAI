@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Intent Engine V2
+ * MedScanAI : Intent Engine V2
  * Detects intent including off-topic rejection and enhanced symptom/medicine patterns.
  */
 import type { IntentType, MedScanDatabaseState } from '../store/useAppStore';

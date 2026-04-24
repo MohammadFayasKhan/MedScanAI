@@ -1,5 +1,5 @@
 /**
- * MedScan+ V4 : Database Proxy
+ * MedScanAI V4 : Database Proxy
  * Provides async database queries to the Web Worker over postMessage.
  *
  * FIXES:

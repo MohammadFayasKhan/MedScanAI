@@ -1,5 +1,5 @@
 /**
- * MedScan+ : Response Engine V2
+ * MedScanAI : Response Engine V2
  * All em-dashes removed. Clean colon-based separators. Improved spacing.
  * Added off_topic handler with polite redirect.
  */
@@ -13,7 +13,7 @@ export interface ChatResponse {
 }
 
 function bullet(items: string[]) {
-  return items.map(x => `• ${x}`).join('\n');
+  return items.map(x => `- ${x}`).join('\n');
 }
 
 function shortList(items: string[], max = 4) {
@@ -26,9 +26,10 @@ function welcome(): string {
     "Hi! I'm your MedScan medicine assistant.",
     '',
     'I can help you with:',
-    '• A medicine name (example: Paracetamol)',
-    '• A symptom (example: fever, allergy, heartburn)',
-    '• Dosage, side effects, interactions, or safety',
+    '',
+    '- Find information about a medicine',
+    '- Answer questions about dosage, side effects, interactions, and safety',
+    '- Suggest medicines commonly used for symptoms like fever or headache',
     '',
     'What would you like to know?',
   ].join('\n');
@@ -42,18 +43,19 @@ function offTopicResponse(entities: string[]): string {
     '',
     topic ? `I noticed you asked about "${topic}". While I cannot help with that, here is what I can do:` : 'Here is what I can help you with:',
     '',
-    '• Medicine details and composition',
-    '• Dosage and administration guidance',
-    '• Side effects and warnings',
-    '• Drug interactions',
-    '• Symptom-based medicine suggestions',
-    '• Pregnancy and pediatric safety',
+    '- Medicine details and composition',
+    '- Dosage and administration guidance',
+    '- Side effects and warnings',
+    '- Drug interactions',
+    '- Symptom-based medicine suggestions',
+    '- Pregnancy and pediatric safety',
     '',
     'Try asking:',
-    '• "What is Paracetamol used for?"',
-    '• "Dosage of Amoxicillin"',
-    '• "Medicines for fever"',
-    '• "Is Ibuprofen safe in pregnancy?"',
+    '',
+    '- "What is Paracetamol used for?"',
+    '- "Dosage of Amoxicillin"',
+    '- "Medicines for fever"',
+    '- "Is Ibuprofen safe in pregnancy?"',
   ].join('\n');
 }
 

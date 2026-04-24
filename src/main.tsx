@@ -1,5 +1,5 @@
 /**
- * MedScan+ : App Entry Point
+ * MedScanAI : App Entry Point
  */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
