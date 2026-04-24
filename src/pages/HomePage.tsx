@@ -13,10 +13,10 @@ import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
 import { useAppStore } from '../store/useAppStore';
 
 const FEATURES = [
-  { icon: 'dataset',        title: 'Massive Database',   desc: '192K+ medicines indexed offline' },
-  { icon: 'bolt',           title: 'Instant Search',     desc: 'Under 5ms response time'         },
-  { icon: 'lock',           title: '100% Offline',       desc: 'Zero internet required'           },
-  { icon: 'psychology_alt', title: 'AI Assistant',       desc: 'Context-aware medical Q&A'       },
+  { icon: 'dataset', title: 'Massive Database', desc: '192K+ medicines indexed offline' },
+  { icon: 'bolt', title: 'Instant Search', desc: 'Under 5ms response time' },
+  { icon: 'lock', title: '100% Offline', desc: 'Zero internet required' },
+  { icon: 'psychology_alt', title: 'AI Assistant', desc: 'Context-aware medical Q&A' },
 ];
 
 export default function HomePage() {
@@ -87,9 +87,8 @@ export default function HomePage() {
                      border border-surface-variant bg-surface-container"
         >
           <span
-            className={`w-2 h-2 rounded-full animate-pulse ${
-              isReady ? 'bg-primary-container' : 'bg-tertiary-container'
-            }`}
+            className={`w-2 h-2 rounded-full animate-pulse ${isReady ? 'bg-primary-container' : 'bg-tertiary-container'
+              }`}
           />
           <span className="text-metadata text-on-surface-variant">
             {isReady ? 'Database ready : fully offline' : progressMsg}
