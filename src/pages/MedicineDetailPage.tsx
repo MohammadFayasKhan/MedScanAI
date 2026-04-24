@@ -1,22 +1,34 @@
 /**
- * MedScan+ V4 — Medicine Detail Page (Enriched)
+ * MedScan+ : Medicine Detail Page (Offline Store)
  *
- * All sections guaranteed to have meaningful content via data-enricher.ts
- * No "—" ever shown — blank CSV fields are intelligently inferred from drug class.
+ * Uses the centralized Zustand store as the source of truth.
+ * This guarantees consistency with Recent/Pinned/Chat state.
  */
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Info, Activity, Droplets, AlertTriangle, AlertCircle,
-  GitBranch, XCircle, ShoppingBag, BookOpen, MessageCircle, ChevronDown,
+  GitBranch, XCircle, BookOpen, MessageCircle, ChevronDown,
   type LucideIcon,
 } from 'lucide-react';
 
-import { getMedicineById } from '../db/database';
-import { useAppStore } from '../ai/contextManager';
-import { Medicine } from '../types/medicine';
-import { enrichMedicine, type EnrichedMedicine } from '../utils/data-enricher';
+import type { Medicine } from '../types/medicine';
+import { getMedicineById, addToHistory } from '../db/database';
+import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
+
+const NOT_SPECIFIED = 'Not specified in this dataset for this medicine.';
+const INTERACTION_SAFETY_NOTE =
+  'Always inform your doctor and pharmacist about ALL medications, supplements, and herbal products you use.';
+const REFERENCES = [
+  'Indian Pharmacopoeia Commission (IPC)',
+  'Central Drugs Standard Control Organisation (CDSCO)',
+  'National Formulary of India (NFI)',
+  'WHO Essential Medicines List (EML)',
+  '1mg Medicine Database',
+  'MedlinePlus Drug Information (NLM)',
+] as const;
 
 // ── Collapsible section component ──────────────────────────────────────────────
 function Section({
@@ -26,7 +38,7 @@ function Section({
   icon: LucideIcon;
   color: string;
   defaultOpen?: boolean;
-  children: React.ReactNode;
+  children: ReactNode;
   badge?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -99,6 +111,14 @@ function WarnBlock({ icon, label, content }: { icon: string; label: string; cont
   );
 }
 
+function pickFirstNonEmpty(...vals: Array<string | null | undefined>) {
+  for (const v of vals) {
+    const s = (v ?? '').trim();
+    if (s) return s;
+  }
+  return '';
+}
+
 // ── Skeleton ───────────────────────────────────────────────────────────────────
 function DetailSkeleton() {
   return (
@@ -113,36 +133,38 @@ function DetailSkeleton() {
 export default function MedicineDetailPage() {
   const { id }   = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const activeMedicine = useAppStore(state => state.activeMedicine);
-  const setActiveMedicine = useAppStore(state => state.setActiveMedicine);
-  const [medicine, setMedicine] = useState<Medicine | null>(activeMedicine);
-  const [enriched, setEnriched] = useState<EnrichedMedicine | null>(
-    activeMedicine ? enrichMedicine(activeMedicine) : null
-  );
+  const [medicine, setMedicine] = useState<Medicine | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
-    const numId = parseInt(id, 10);
-    if (activeMedicine?.id === numId) {
-      setMedicine(activeMedicine);
-      setEnriched(enrichMedicine(activeMedicine));
-      return;
-    }
-    (async () => {
-      const m = await getMedicineById(numId);
-      if (m) {
-        setMedicine(m);
-        setEnriched(enrichMedicine(m));
-        setActiveMedicine(m);
-      } else {
+    let cancelled = false;
+    const run = async () => {
+      if (!id) return;
+      const numericId = Number.parseInt(id, 10);
+      if (!Number.isFinite(numericId)) {
         navigate('/');
+        return;
       }
-    })();
-  }, [id, activeMedicine, navigate, setActiveMedicine]);
 
-  if (!medicine || !enriched) return <DetailSkeleton />;
+      setIsLoading(true);
+      const m = await getMedicineById(numericId);
+      if (cancelled) return;
 
-  const e = enriched;
+      if (!m) {
+        navigate('/');
+        return;
+      }
+
+      setMedicine(m);
+      ensureMedicineInStoreFromDb(m, true);
+      addToHistory(m.id, m.brand_name, 'manual');
+      setIsLoading(false);
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [id, navigate]);
+
+  if (isLoading || !medicine) return <DetailSkeleton />;
 
   return (
     <div className="flex-1 flex flex-col" style={{ background: 'var(--color-background)' }}>
@@ -163,34 +185,26 @@ export default function MedicineDetailPage() {
             className="text-2xl font-bold leading-tight mb-1"
             style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-text-accent)' }}
           >
-            {e.brandName}
+            {medicine.brand_name}
           </motion.h2>
 
-          {e.generic && e.generic !== e.brandName && (
+          {medicine.international_name && medicine.international_name.toLowerCase() !== medicine.brand_name.toLowerCase() && (
             <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>
-              {e.generic}{e.strength ? ` · ${e.strength}` : ''}
+              {medicine.international_name}
             </p>
           )}
 
           <div className="flex flex-wrap gap-2 mt-2">
-            {e.form && (
-              <span className="text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(125,216,240,0.12)', color: '#7DD8F0', border: '1px solid rgba(125,216,240,0.2)' }}>
-                {e.form}
-              </span>
-            )}
-            {e.category && (
+            {medicine.category && (
               <span className="text-xs px-2.5 py-1 rounded-full"
                 style={{ background: 'rgba(78,205,196,0.12)', color: '#4ECDC4', border: '1px solid rgba(78,205,196,0.2)' }}>
-                {e.category}
+                {medicine.category}
               </span>
             )}
-            {e.strength && (
-              <span className="text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                {e.strength}
-              </span>
-            )}
+            <span className="text-xs px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(125,216,240,0.12)', color: '#7DD8F0', border: '1px solid rgba(125,216,240,0.2)' }}>
+              {medicine.pharmaceutical_form || 'Medicine'}
+            </span>
           </div>
         </motion.div>
 
@@ -199,27 +213,28 @@ export default function MedicineDetailPage() {
 
           {/* 1. Basic Information */}
           <Section title="Basic Information" icon={Info} color="#7DD8F0" defaultOpen>
-            <Row label="Brand Name"        value={e.brandName} />
-            <Row label="Generic / INN"     value={e.generic} />
-            {e.strength && <Row label="Strength"        value={e.strength} />}
-            <Row label="Dosage Form"       value={e.form} />
-            <Row label="Drug Class"        value={e.category} />
+            <Row label="Brand name" value={medicine.brand_name} />
+            <Row label="International name" value={medicine.international_name} />
+            <Row label="Active substance" value={medicine.active_substance} />
+            <Row label="Form" value={medicine.pharmaceutical_form} />
+            <Row label="Strength" value={medicine.strength} />
+            <Row label="Manufacturer" value={medicine.manufacturer} />
+            <Row label="Category" value={medicine.category} />
           </Section>
 
           {/* 2. Uses & Indications */}
           <Section title="Uses & Indications" icon={Activity} color="#4ECDC4">
             <p className="text-sm leading-relaxed mb-4" style={{ color: 'var(--color-text-primary)' }}>
-              {e.indications}
+              {medicine.therapeutic_indications || 'No uses listed for this entry.'}
             </p>
-            <Row label="Mechanism of Action" value={e.mechanism} />
           </Section>
 
           {/* 3. Dosage & Administration */}
           <Section title="Dosage & Administration" icon={Droplets} color="#7DD8F0">
-            <Row label="Adult Dose"          value={e.dosageAdult} />
-            <Row label="Children's Dose"     value={e.dosageChild} />
-            <Row label="Timing"              value={e.timing} />
-            <Row label="Administration Tips" value={e.administrationTips} />
+            <Row label="Typical dosing" value={medicine.typical_dosing} />
+            <Row label="Administration tips" value={medicine.administration_tips} />
+            <Row label="Timing" value={medicine.timing_info} />
+            <Row label="Spacing medications" value={medicine.spacing_medications || medicine.administration_spacing} />
             <div className="mt-3 p-3 rounded-xl text-xs leading-relaxed"
               style={{ background: 'rgba(125,216,240,0.06)', border: '1px solid rgba(125,216,240,0.14)', color: 'rgba(255,255,255,0.45)' }}>
               ⚠️ Always follow your doctor's or pharmacist's prescribed dosage and duration. Do not self-adjust.
@@ -228,8 +243,8 @@ export default function MedicineDetailPage() {
 
           {/* 4. Side Effects */}
           <Section title="Side Effects" icon={AlertCircle} color="#E67E22">
-            <Row label="Common Side Effects"  value={e.sideEffectsCommon} />
-            <Row label="Serious Side Effects" value={e.sideEffectsSerious} />
+            <Row label="Common side effects" value={medicine.common_side_effects} />
+            <Row label="Serious side effects" value={medicine.serious_side_effects} />
             <div className="mt-3 p-3 rounded-xl text-xs leading-relaxed"
               style={{ background: 'rgba(230,126,34,0.07)', border: '1px solid rgba(230,126,34,0.16)', color: 'rgba(255,255,255,0.45)' }}>
               Not everyone experiences side effects. Report any persistent, severe, or unexpected effects to your doctor.
@@ -238,61 +253,52 @@ export default function MedicineDetailPage() {
 
           {/* 5. Warnings & Precautions */}
           <Section title="Warnings & Precautions" icon={AlertTriangle} color="#F5A623">
-            <WarnBlock icon="🤰" label="Pregnancy & Breastfeeding" content={e.pregnancy} />
-            <WarnBlock icon="👶" label="Children & Infants"        content={e.pediatric} />
-            <WarnBlock icon="🚗" label="Driving & Machinery"      content={e.driving} />
-            <WarnBlock icon="📦" label="Storage Instructions"      content={e.storage} />
+            <WarnBlock
+              icon="🤰"
+              label="Pregnancy"
+              content={pickFirstNonEmpty(medicine.pregnancy_warning, NOT_SPECIFIED)}
+            />
+            <WarnBlock
+              icon="🧒"
+              label="Pediatric"
+              content={pickFirstNonEmpty(medicine.pediatric_warning, NOT_SPECIFIED)}
+            />
+            <WarnBlock
+              icon="🚗"
+              label="Driving"
+              content={pickFirstNonEmpty(medicine.driving_warning, NOT_SPECIFIED)}
+            />
           </Section>
 
           {/* 6. Contraindications */}
           <Section title="Contraindications" icon={XCircle} color="#E74C3C">
-            <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              {e.contraindications}
-            </p>
+            <Row label="Hypersensitivity / allergy" value={medicine.hypersensitivity_info} />
+            <Row label="When to stop" value={medicine.when_to_stop} />
+            <Row label="Emergency situations" value={medicine.emergency_situations} />
+            {!(medicine.hypersensitivity_info || '').trim() &&
+              !(medicine.when_to_stop || '').trim() &&
+              !(medicine.emergency_situations || '').trim() && (
+                <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.8)' }}>
+                  {NOT_SPECIFIED}
+                </p>
+              )}
           </Section>
 
           {/* 7. Drug Interactions */}
           <Section title="Drug Interactions" icon={GitBranch} color="#9B59B6">
             <p className="text-sm leading-relaxed mb-3" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              {e.interactions}
+              {pickFirstNonEmpty(medicine.drug_interactions, NOT_SPECIFIED)}
             </p>
             <div className="p-3 rounded-xl text-xs"
               style={{ background: 'rgba(155,89,182,0.08)', border: '1px solid rgba(155,89,182,0.18)', color: 'rgba(255,255,255,0.45)' }}>
-              Always inform your doctor and pharmacist about ALL medications, supplements, and herbal products you use.
+              {INTERACTION_SAFETY_NOTE}
             </div>
-          </Section>
-
-          {/* 8. Availability & Substitutes */}
-          <Section title="Availability & Substitutes" icon={ShoppingBag} color="#3498DB">
-            <Row label="Schedule" value="Prescription only (Schedule H) - unless available OTC" />
-            <Row label="Availability" value="Available at most licensed pharmacies across India." />
-            {e.substitutes.length > 0 && (
-              <div className="mt-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest mb-2"
-                  style={{ color: 'var(--color-text-accent)' }}>Known Substitutes</p>
-                <div className="flex flex-wrap gap-2">
-                  {e.substitutes.map((s, i) => (
-                    <span key={i} className="text-xs px-3 py-1 rounded-full"
-                      style={{ background: 'rgba(52,152,219,0.12)', border: '1px solid rgba(52,152,219,0.25)', color: '#3498DB' }}>
-                      {s}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
           </Section>
 
           {/* 9. References */}
           <Section title="References & Sources" icon={BookOpen} color="#95A5A6">
             <ul className="space-y-2 text-sm" style={{ color: 'rgba(255,255,255,0.45)' }}>
-              {[
-                'Indian Pharmacopoeia Commission (IPC)',
-                'Central Drugs Standard Control Organisation (CDSCO)',
-                'National Formulary of India (NFI)',
-                'WHO Essential Medicines List (EML)',
-                '1mg Medicine Database',
-                'MedlinePlus Drug Information (NLM)',
-              ].map(src => (
+              {REFERENCES.map(src => (
                 <li key={src} className="flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0" style={{ background: '#95A5A6' }} />
                   {src}

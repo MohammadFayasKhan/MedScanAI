@@ -1,10 +1,10 @@
 /**
- * MedScan+ V4 — Database Proxy
+ * MedScan+ V4 : Database Proxy
  * Provides async database queries to the Web Worker over postMessage.
  *
  * FIXES:
- * 1. Queue-based search — multiple callers no longer race to overwrite resolveSearch
- * 2. waitForReady() — chatbot/search wait up to 15s for the worker to finish loading
+ * 1. Queue-based search : multiple callers no longer race to overwrite resolveSearch
+ * 2. waitForReady() : chatbot/search wait up to 15s for the worker to finish loading
  *    instead of silently returning [] when called before isReady=true
  * 3. Queue-based GET to prevent the same race on getMedicineById
  */
@@ -17,6 +17,7 @@ let loadingMessage = 'Starting worker…';
 // Queues so concurrent calls don't clobber each other
 const searchQueue: ((results: Medicine[]) => void)[] = [];
 const getQueue:    ((result: Medicine | null) => void)[] = [];
+const getAllQueue:  ((results: Medicine[], total: number) => void)[] = [];
 
 // Waiters that resolve when isReady becomes true
 const readyWaiters: (() => void)[] = [];
@@ -67,6 +68,10 @@ export async function initDatabase(onProgress: (msg: string) => void): Promise<n
     } else if (type === 'GET_SUCCESS') {
       const cb = getQueue.shift();
       if (cb) cb(result ?? null);
+
+    } else if (type === 'GET_ALL_SUCCESS') {
+      const cb = getAllQueue.shift();
+      if (cb) cb(results ?? [], (e.data.total as number) ?? 0);
     }
   };
 
@@ -113,6 +118,21 @@ export async function getMedicineById(id: number): Promise<Medicine | null> {
   });
 }
 
+export async function getAllMedicines(
+  opts: { offset?: number; limit?: number; category?: string } = {}
+): Promise<{ results: Medicine[]; total: number }> {
+  if (!worker) return { results: [], total: 0 };
+  try {
+    await waitForReady();
+  } catch {
+    return { results: [], total: 0 };
+  }
+  worker.postMessage({ type: 'GET_ALL', payload: opts });
+  return new Promise((resolve) => {
+    getAllQueue.push((results, total) => resolve({ results, total }));
+  });
+}
+
 // ── History ──────────────────────────────────────────────────────────
 const HISTORY_KEY = 'medscan-history-v1';
 
@@ -128,5 +148,7 @@ export function addToHistory(id: number, brand_name: string, scan_method: 'webca
       scanned_at: new Date().toISOString(),
     };
     localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...history].slice(0, 100)));
-  } catch {}
+  } catch (err) {
+    console.error('[MedScan] failed to save history', err);
+  }
 }

@@ -1,5 +1,5 @@
 /**
- * MedScan+ V3 — Chat Input
+ * MedScan+ V3 : Chat Input
  * Sticky glassmorphic input bar with send button and Enter key support.
  */
 import { useState, KeyboardEvent } from 'react';
@@ -20,6 +20,11 @@ export default function ChatInput({ onSend, disabled }: Props) {
   };
 
   const handleKey = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setText('');
+      return;
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();

@@ -1,21 +1,20 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedButton from '../AnimatedButton';
-import { Medicine } from '../../types/medicine';
 
 interface SuggestionChipsProps {
-  activeMedicine: Medicine | null;
+  hasActiveMedicine: boolean;
   isTyping: boolean;
   onSend: (text: string) => void;
   dynamicChips?: string[];
 }
 
-export default function SuggestionChips({ activeMedicine, isTyping, onSend, dynamicChips = [] }: SuggestionChipsProps) {
+export default function SuggestionChips({ hasActiveMedicine, isTyping, onSend, dynamicChips = [] }: SuggestionChipsProps) {
   if (isTyping) return null;
 
   let chipsToRender = dynamicChips;
 
   if (chipsToRender.length === 0) {
-    if (activeMedicine) {
+    if (hasActiveMedicine) {
       chipsToRender = ['Side effects', 'Dosage', 'Interactions', 'Pregnancy safety'];
     } else {
       chipsToRender = ['Paracetamol', 'Fever medicine', 'Allergy relief', 'Ibuprofen'];

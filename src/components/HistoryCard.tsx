@@ -1,5 +1,5 @@
 /**
- * MedScan+ — History Card
+ * MedScan+ : History Card
  * Displays a single scan history entry with method badge and relative time.
  */
 import { useNavigate } from 'react-router-dom';

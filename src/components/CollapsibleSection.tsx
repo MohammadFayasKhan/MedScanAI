@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Collapsible Section
+ * MedScan+ : Collapsible Section
  * Smooth Framer Motion expand/collapse with colored icon + title row.
  */
 import { useState } from 'react';

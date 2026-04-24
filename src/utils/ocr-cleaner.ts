@@ -1,5 +1,5 @@
 /**
- * MedScan+ — OCR Text Cleaner
+ * MedScan+ : OCR Text Cleaner
  * Normalizes raw Tesseract.js output and extracts medicine name candidates.
  */
 

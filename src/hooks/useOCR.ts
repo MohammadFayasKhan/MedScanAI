@@ -1,5 +1,5 @@
 /**
- * MedScan+ — OCR Hook
+ * MedScan+ : OCR Hook
  * Uses Tesseract.js + the ocr-cleaner utilities to accurately extract
  * medicine names from scanned images and match them against the DB.
  */
@@ -22,9 +22,11 @@ async function imageToText(
 ): Promise<string> {
   const Tesseract = await import('tesseract.js');
   const worker = await Tesseract.createWorker('eng', 1, {
-    logger: (m: any) => {
-      if (m.status === 'recognizing text') onProgress(Math.round(m.progress * 80));
-    },
+    logger: (m: { status?: string; progress?: number }) => {
+      if (m.status === 'recognizing text' && typeof m.progress === 'number') {
+        onProgress(Math.round(m.progress * 80));
+      }
+    }
   });
   const result = await worker.recognize(source);
   await worker.terminate();
@@ -67,8 +69,9 @@ export function useOCR() {
 
       setState({ status: 'error', progress: 0, error: 'No medicine found in image. Try searching manually.' });
       return null;
-    } catch (err: any) {
-      setState({ status: 'error', progress: 0, error: err?.message ?? 'OCR failed' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'OCR failed';
+      setState({ status: 'error', progress: 0, error: message });
       return null;
     }
   }, []);

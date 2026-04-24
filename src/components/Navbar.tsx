@@ -1,98 +1,183 @@
-import { useState, useEffect } from 'react';
+/**
+ * MedScan+ : Navbar  (matches mockup header exactly)
+ * bg: bg-background | border-b border-surface-variant | h-16
+ * Logo: primary-container, uppercase, tracking-tighter, font-black
+ * Right: Chat/Think mode pill + notifications + avatar
+ */
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Home, MessageCircle, Navigation, ArrowLeft } from 'lucide-react';
 import GlobalSearch from './GlobalSearch';
 
+const NAV_LINKS = [
+  { label: 'Home',      path: '/',         icon: 'home'           },
+  { label: 'AI Chat',   path: '/chat',      icon: 'chat'           },
+  { label: 'Medicines', path: '/knowledge', icon: 'medication'     },
+  { label: 'History',   path: '/history',   icon: 'history'        },
+];
+
 export default function Navbar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const navigate  = useNavigate();
+  const location  = useLocation();
+  const [mobileOpen,    setMobileOpen]    = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
 
+  /* Close mobile on route change */
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  /* Cmd/Ctrl + K → focus search */
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onKey = (e: KeyboardEvent) => {
+      const mac = navigator.platform.toLowerCase().includes('mac');
+      if ((mac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const el = document.getElementById('global-search-input') as HTMLInputElement | null;
+        el?.focus(); el?.select?.();
+      }
+      if (e.key === 'Escape') {
+        const el = document.getElementById('global-search-input') as HTMLInputElement | null;
+        if (document.activeElement === el) el?.blur();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const navLinks = [
-    { label: 'Home', path: '/', icon: Home },
-    { label: 'Chatbot', path: '/chat', icon: MessageCircle }
-  ];
+  const isActive = useCallback((p: string) =>
+    p === '/' ? location.pathname === '/' : location.pathname.startsWith(p),
+  [location.pathname]);
 
   return (
-    <header className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled ? 'bg-[#0f1115]/95 backdrop-blur-xl shadow-lg border-b border-surface-border' : 'bg-[#0A0E1A] border-b border-transparent'}`}>
-      <div className={`w-full px-4 transition-all duration-300 flex items-center justify-between gap-4 ${searchFocused ? 'h-20' : 'h-16'}`}>
-        
-        {/* Left: Logo & Back Button */}
-        <div className="flex items-center gap-3 flex-shrink-0 z-10 w-1/4">
-          {location.pathname !== '/' && (
-            <button onClick={() => navigate(-1)} className="p-2 rounded-xl text-text-secondary hover:text-white hover:bg-white/10 transition-colors hidden sm:block">
-              <ArrowLeft size={20} />
-            </button>
-          )}
-          <div className="cursor-pointer flex items-center gap-2" onClick={() => navigate('/')}>
-            <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-[#7DD8F0] to-[#4ECDC4]">
-              <Navigation size={18} color="#000" />
-            </div>
-            <span className="text-lg font-bold tracking-wide hidden sm:block" style={{ fontFamily: 'var(--font-heading)', color: 'var(--color-primary)' }}>
-              MedScan+
+    <header
+      id="top-navbar"
+      className="sticky top-0 z-50 w-full flex-shrink-0 bg-background border-b border-surface-variant"
+      style={{ height: 64 }}
+    >
+      <div className="w-full h-full flex items-center justify-between px-md lg:px-lg gap-md">
+
+        {/* ── Left: hamburger + logo + desktop nav ─────────────── */}
+        <div className="flex items-center gap-md flex-shrink-0">
+          {/* Hamburger (mobile) */}
+          <button
+            id="hamburger-btn"
+            className="text-on-surface-variant hover:text-on-surface transition-colors
+                       flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container lg:hidden"
+            onClick={() => setMobileOpen(v => !v)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: 22 }}>
+              {mobileOpen ? 'close' : 'menu'}
             </span>
-          </div>
+          </button>
+
+          {/* Logo */}
+          <button
+            id="logo-btn"
+            onClick={() => navigate('/')}
+            className="font-heading text-heading font-black text-primary-container
+                       tracking-tighter uppercase select-none hover:opacity-80 transition-opacity"
+            aria-label="MedScan+ Home"
+          >
+            MedScan+
+          </button>
+
+          {/* Desktop nav links */}
+          <nav className="hidden lg:flex items-center gap-xs ml-lg" aria-label="Main navigation">
+            {NAV_LINKS.map(({ label, path, icon }) => {
+              const active = isActive(path);
+              return (
+                <button
+                  key={path}
+                  id={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+                  onClick={() => navigate(path)}
+                  className={`flex items-center gap-xs px-sm py-xs rounded-lg text-body transition-colors duration-150 ${
+                    active
+                      ? 'text-primary-container bg-surface-container'
+                      : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
+                  }`}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{
+                      fontSize: 16,
+                      fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
+                    }}
+                  >
+                    {icon}
+                  </span>
+                  {label}
+                </button>
+              );
+            })}
+          </nav>
         </div>
 
-        {/* Center: Global Search Bar (Absolutely Centered) */}
-        <div className={`absolute left-1/2 -translate-x-1/2 w-full max-w-[500px] transition-all duration-300 z-20 ${searchFocused ? 'scale-[1.02]' : ''}`}>
+        {/* ── Center: search ───────────────────────────────────── */}
+        <div
+          className={`flex-1 max-w-[500px] transition-all duration-200 ${
+            searchFocused ? 'max-w-[600px]' : 'max-w-[460px]'
+          }`}
+        >
           <GlobalSearch onFocusChange={setSearchFocused} />
         </div>
 
-        {/* Right: Desktop Links */}
-        <nav className="hidden md:flex items-center justify-end gap-1 flex-shrink-0 z-10 w-1/4">
-          {navLinks.map(link => {
-            const active = location.pathname === link.path;
-            const Icon = link.icon;
-            return (
-              <button key={link.label} onClick={() => navigate(link.path)}
-                className="px-4 py-2 rounded-xl text-sm font-medium transition-all hover:bg-white/10 flex items-center gap-2"
-                style={{ color: active ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}
-              >
-                <Icon size={16} />
-                {link.label}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Mobile Hamburger */}
-        <button className="md:hidden p-2 rounded-xl text-gray-300 hover:bg-white/10 transition-colors flex-shrink-0" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+        {/* ── Right: offline badge only ────────────────────── */}
+        <div className="flex items-center gap-sm flex-shrink-0">
+          <div
+            className="hidden sm:flex items-center gap-xs px-sm py-xs rounded-full
+                       border border-surface-variant bg-surface-container"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-container" />
+            <span className="text-metadata font-medium text-primary-container">Offline</span>
+          </div>
+        </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* ── Mobile menu dropdown ─────────────────────────────── */}
       <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            className="md:hidden overflow-hidden border-b border-white/10 bg-[#0f1115]/95 backdrop-blur-xl"
+        {mobileOpen && (
+          <motion.nav
+            key="mobile-nav"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="lg:hidden overflow-hidden border-t border-surface-variant bg-background"
+            aria-label="Mobile navigation"
           >
-            <div className="px-4 py-3 flex flex-col gap-1">
-              {navLinks.map(link => {
-                const active = location.pathname === link.path;
-                const Icon = link.icon;
+            <div className="px-md py-sm flex flex-col gap-xs">
+              {NAV_LINKS.map(({ label, path, icon }, i) => {
+                const active = isActive(path);
                 return (
-                  <button key={link.label} onClick={() => { setMobileMenuOpen(false); navigate(link.path); }}
-                    className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center gap-3"
-                    style={{ background: active ? 'rgba(78, 205, 196, 0.1)' : 'transparent', color: active ? 'var(--color-primary)' : 'var(--color-text-primary)' }}
+                  <motion.button
+                    key={path}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    onClick={() => navigate(path)}
+                    className={`flex items-center gap-md px-md py-sm rounded-lg text-body text-left transition-colors ${
+                      active
+                        ? 'bg-surface-container text-primary-container border-l-2 border-primary-container'
+                        : 'text-on-surface-variant hover:bg-surface-container hover:text-on-surface border-l-2 border-transparent'
+                    }`}
                   >
-                    <Icon size={18} />
-                    {link.label}
-                  </button>
+                    <span
+                      className="material-symbols-outlined"
+                      style={{
+                        fontSize: 20,
+                        fontVariationSettings: active ? "'FILL' 1" : "'FILL' 0",
+                      }}
+                    >
+                      {icon}
+                    </span>
+                    {label}
+                  </motion.button>
                 );
               })}
             </div>
-          </motion.div>
+          </motion.nav>
         )}
       </AnimatePresence>
     </header>

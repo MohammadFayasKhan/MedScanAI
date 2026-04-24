@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Scan History Hook
+ * MedScan+ : Scan History Hook
  * Persists medicine scan history in localStorage.
  */
 import { useState, useCallback } from 'react';
@@ -29,13 +29,17 @@ function loadPinned(): ScanHistory[] {
 function saveHistory(history: ScanHistory[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 100)));
-  } catch {}
+  } catch (err) {
+    console.error('[MedScan] failed to persist history', err);
+  }
 }
 
 function savePinned(pinned: ScanHistory[]) {
   try {
     localStorage.setItem(PINNED_KEY, JSON.stringify(pinned));
-  } catch {}
+  } catch (err) {
+    console.error('[MedScan] failed to persist pinned', err);
+  }
 }
 
 export function useHistory() {

@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Webcam Scanner Component
+ * MedScan+ : Webcam Scanner Component
  * Uses browser getUserMedia API for live video capture.
  */
 import { useRef, useEffect, useState } from 'react';

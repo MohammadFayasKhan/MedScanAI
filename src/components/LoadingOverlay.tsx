@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Loading Overlay
+ * MedScan+ : Loading Overlay
  * Shows animated "Building monograph…" during OCR processing.
  */
 import { motion } from 'framer-motion';

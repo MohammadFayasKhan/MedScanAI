@@ -1,5 +1,5 @@
 /**
- * MedScan+ — No Results Card
+ * MedScan+ : No Results Card
  * Empty state UI for search / OCR not found.
  */
 interface Props {

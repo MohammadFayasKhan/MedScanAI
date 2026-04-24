@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Medicine Fuzzy Matcher
+ * MedScan+ : Medicine Fuzzy Matcher
  * Scores search results using Levenshtein distance + prefix/contains bonuses.
  */
 

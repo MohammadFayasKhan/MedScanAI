@@ -1,5 +1,5 @@
 /**
- * MedScan+ — Fuzzy Search
+ * MedScan+ : Fuzzy Search
  * Entrypoint for searching the local dataset with fuzzy matching.
  */
 import { Medicine } from '../types/medicine';
