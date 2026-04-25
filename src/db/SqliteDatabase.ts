@@ -145,45 +145,39 @@ export class SqliteDatabase {
 
     if (!bytes || bytes.byteLength < 1024) {
       onProgress('Connecting to database...');
-      const response = await fetch(dbUrl(), { cache: 'no-cache' });
-      if (!response.ok) {
-        throw new Error(`Could not fetch ${dbUrl()} (${response.status})`);
-      }
       
-      const reader = response.body?.getReader();
-      if (!reader) {
-        onProgress('Downloading database...');
-        bytes = new Uint8Array(await response.arrayBuffer());
-      } else {
-        const chunks: Uint8Array[] = [];
-        let receivedLength = 0;
-        
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          
-          chunks.push(value);
-          receivedLength += value.length;
-          
-          const mb = (receivedLength / (1024 * 1024)).toFixed(1);
-          const message = `Downloading & extracting database: ${mb} MB...`;
-          onProgress(message);
-          
-          // Log occasionally to prevent console flood
-          if (chunks.length % 50 === 0) {
-            console.log(`[MedScanAI] Database extraction progress: ${mb} MB`);
+      bytes = await new Promise<Uint8Array>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', dbUrl(), true);
+        xhr.responseType = 'arraybuffer';
+        xhr.setRequestHeader('Cache-Control', 'no-cache');
+
+        xhr.onprogress = (event) => {
+          const mb = (event.loaded / (1024 * 1024)).toFixed(1);
+          if (event.lengthComputable && event.total > 0) {
+            const total = (event.total / (1024 * 1024)).toFixed(1);
+            const percent = Math.round((event.loaded / event.total) * 100);
+            onProgress(`Downloading database: ${mb} / ${total} MB (${percent}%)`);
+          } else {
+            onProgress(`Downloading & extracting database: ${mb} MB...`);
           }
-        }
-        
-        console.log(`[MedScanAI] Download complete. Total extracted: ${(receivedLength / (1024 * 1024)).toFixed(1)} MB`);
-        onProgress('Assembling database...');
-        bytes = new Uint8Array(receivedLength);
-        let position = 0;
-        for (const chunk of chunks) {
-          bytes.set(chunk, position);
-          position += chunk.length;
-        }
-      }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            onProgress('Assembling database...');
+            resolve(new Uint8Array(xhr.response));
+          } else {
+            reject(new Error(`Could not fetch ${dbUrl()} (${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('Network error during download'));
+        };
+
+        xhr.send();
+      });
 
       onProgress('Saving database for offline use...');
       await localforage.setItem(DB_CACHE_KEY, bytes);
