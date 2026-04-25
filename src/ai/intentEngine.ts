@@ -1,77 +1,45 @@
-/**
- * MedScanAI : Intent Engine
- * Detects the user's intent from their message to guide response formatting.
- */
+export type MedicineIntent =
+  | 'PRICE'
+  | 'DOSAGE'
+  | 'SIDE_EFFECTS'
+  | 'ALCOHOL_SAFETY'
+  | 'PREGNANCY_SAFETY'
+  | 'BREASTFEEDING_SAFETY'
+  | 'DRIVING_SAFETY'
+  | 'MECHANISM'
+  | 'QUICK_TIPS'
+  | 'OVERVIEW';
 
-export type Intent =
-  | 'medicine_lookup'
-  | 'symptom_query'
-  | 'side_effects'
-  | 'dosage'
-  | 'pregnancy_safety'
-  | 'interactions'
-  | 'clarification'
-  | 'general'
-  | 'comparison';
-
-const INTENT_PATTERNS = {
-  side_effects: /\b(side effects?|effects?|adverse|bad reaction|nausea|dizzy)\b/i,
-  dosage: /\b(dose|dosage|how much|mg|amount|how many|frequency|take)\b/i,
-  symptom_query: /\b(fever|cold|headache|pain|cough|infection|allergy|sneeze|runny nose|throat)\b/i,
-  pregnancy_safety: /\b(pregnant|pregnancy|kids|child|children|safe for|breastfeeding|baby)\b/i,
-  interactions: /\b(interactions?|with|can i take.*with|mix)\b/i,
-  comparison: /\b(vs|versus|compare|better)\b/i,
-};
-
-export interface DetectIntentParams {
-  userMessage: string;
-  hasActiveMedicine: boolean;
-  medicineName?: string;
+export interface IntentDetection {
+  intent: MedicineIntent;
+  confidence: number;
+  entities: string[];
 }
 
-export function detectIntent({ userMessage, hasActiveMedicine, medicineName }: DetectIntentParams): Intent {
-  const msg = userMessage.toLowerCase();
+const INTENT_RULES: Array<{ intent: MedicineIntent; confidence: number; pattern: RegExp }> = [
+  { intent: 'PRICE', confidence: 0.96, pattern: /\b(price|cost|mrp|rate|rupees?|₹|pack size|strip|bottle)\b/i },
+  { intent: 'DOSAGE', confidence: 0.94, pattern: /\b(dose|dosage|how to use|take|tablet|capsule|frequency|before food|after food)\b/i },
+  { intent: 'SIDE_EFFECTS', confidence: 0.94, pattern: /\b(side effects?|adverse|reaction|nausea|dizzy|vomit|rash)\b/i },
+  { intent: 'ALCOHOL_SAFETY', confidence: 0.97, pattern: /\b(alcohol|drink|beer|wine|whisky)\b/i },
+  { intent: 'PREGNANCY_SAFETY', confidence: 0.96, pattern: /\b(pregnan|trimester|unborn|baby during pregnancy)\b/i },
+  { intent: 'BREASTFEEDING_SAFETY', confidence: 0.95, pattern: /\b(breast ?feeding|lactation|nursing mother)\b/i },
+  { intent: 'DRIVING_SAFETY', confidence: 0.93, pattern: /\b(driv|sleepy|drowsy|operate machinery)\b/i },
+  { intent: 'MECHANISM', confidence: 0.92, pattern: /\b(mechanism|how.*works?|mode of action|action class)\b/i },
+  { intent: 'QUICK_TIPS', confidence: 0.9, pattern: /\b(tips?|advice|remember|precautions?|instructions?)\b/i },
+];
 
-  // 1. Comparison check
-  if (INTENT_PATTERNS.comparison.test(msg)) {
-    return 'comparison';
-  }
+export function detectMedicineIntent(message: string): IntentDetection {
+  const entities = message
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
 
-  // 2. Specific queries
-  if (INTENT_PATTERNS.side_effects.test(msg)) return 'side_effects';
-  if (INTENT_PATTERNS.dosage.test(msg)) return 'dosage';
-  if (INTENT_PATTERNS.pregnancy_safety.test(msg)) return 'pregnancy_safety';
-  if (INTENT_PATTERNS.interactions.test(msg)) return 'interactions';
-  
-  // 3. Symptoms
-  if (INTENT_PATTERNS.symptom_query.test(msg)) {
-    // If they ask "headache medicine", it's a symptom query even if active medicine exists
-    return 'symptom_query';
-  }
-
-  // 4. Follow-up short query context
-  if (hasActiveMedicine && msg.split(' ').length <= 3) {
-    // Short queries while a medicine is active might be ambiguous
-    // For example: "more info", "tell me", etc. Let's return clarification if not clearly matched.
-    if (!medicineName || msg !== medicineName.toLowerCase()) {
-       return 'clarification';
+  for (const rule of INTENT_RULES) {
+    if (rule.pattern.test(message)) {
+      return { intent: rule.intent, confidence: rule.confidence, entities };
     }
   }
 
-  // 5. Default fallback
-  // If it's a single word or short phrase that hasn't matched anything else, assume medicine lookup
-  if (msg.split(' ').length <= 3) {
-    return 'medicine_lookup';
-  }
-
-  return 'general';
+  return { intent: 'OVERVIEW', confidence: 0.55, entities };
 }
-
-/*
-TEST CASES:
-// Case 1: "paracetmol" → No specific patterns, short query, hasActive=false → medicine_lookup
-// Case 2: "fever" → matches symptom_query → symptom_query
-// Case 3: "is it safe for kids?" → matches pregnancy_safety (kids) → pregnancy_safety
-// Case 4: "ibuprofen vs paracetamol" → matches comparison (vs) → comparison
-// Case 5: activeMed=Paracetamol, user says "dosage" → matches dosage → dosage
-*/

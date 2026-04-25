@@ -1,8 +1,8 @@
 /**
  * MedScanAI : ContextHeader
  * Shows active medicine context. Self-manages expand/collapse.
- * Phase 4: Switch button REMOVED. Sidebar handles switching.
- * Only "X" to clear context + expand arrow remain.
+ * Switch clears medicine context and focuses global search. X clears the
+ * current chat history while keeping the selected medicine.
  */
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,7 +21,8 @@ export default function ContextHeader({ showDetails: externalShow, onToggleDetai
   const medicines         = useAppStore(s => s.medicines);
   const activeMedicineId  = useAppStore(s => s.activeMedicineId);
   const recentIds         = useAppStore(s => s.recentMedicines);
-  const clearChatAndContext = useAppStore(s => s.clearChatAndContext);
+  const switchMedicineContext = useAppStore(s => s.switchMedicineContext);
+  const clearAllMessages = useAppStore(s => s.clearAllMessages);
 
   const medicine = activeMedicineId ? medicines.get(activeMedicineId) : null;
 
@@ -69,14 +70,26 @@ export default function ContextHeader({ showDetails: externalShow, onToggleDetai
           </motion.span>
         </button>
 
-        {/* Close button only — no Switch */}
         <button
-          onClick={() => clearChatAndContext()}
+          onClick={() => switchMedicineContext()}
+          className="flex-shrink-0 px-3 h-8 rounded-xl flex items-center gap-1.5
+                     border border-white/10 bg-white/5 text-xs font-semibold
+                     transition-colors hover:bg-white/10"
+          style={{ color: 'var(--primary-container)' }}
+          aria-label="Switch medicine"
+          title="Switch medicine"
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 15 }}>swap_horiz</span>
+          Switch
+        </button>
+
+        <button
+          onClick={() => clearAllMessages()}
           className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center
                      transition-colors hover:bg-surface-container"
           style={{ color: 'var(--on-surface-variant)' }}
-          aria-label="Clear medicine context"
-          title="Clear context"
+          aria-label="Clear chat history"
+          title="Clear chat history"
         >
           <span className="material-symbols-outlined" style={{ fontSize: 16 }}>close</span>
         </button>

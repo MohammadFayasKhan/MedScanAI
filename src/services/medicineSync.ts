@@ -56,6 +56,24 @@ export function mapDbMedicineToStore(db: DbMedicine): StoreMedicine {
         .join(';')
     ),
     contraindications: splitList(db.hypersensitivity_info),
+    price: db.price,
+    currency: db.currency || '₹',
+    packSize: db.pack_size_label || db.pack_size || db.pack_sizes,
+    manufacturer: db.manufacturer,
+    mechanismOfAction: db.mechanism_of_action,
+    howToUse: db.how_to_use,
+    quickTips: db.quick_tips,
+    alcoholSafetyText: db.safety_alcohol_text,
+    alcoholSafetyLabel: db.safety_alcohol_label,
+    pregnancySafetyLabel: db.safety_pregnancy_label,
+    breastfeedingSafetyText: db.safety_breastfeeding_text,
+    breastfeedingSafetyLabel: db.safety_breastfeeding_label,
+    drivingSafetyText: db.safety_driving_text,
+    drivingSafetyLabel: db.safety_driving_label,
+    kidneySafetyText: db.safety_kidney_text,
+    kidneySafetyLabel: db.safety_kidney_label,
+    liverSafetyText: db.safety_liver_text,
+    liverSafetyLabel: db.safety_liver_label,
   };
 }
 

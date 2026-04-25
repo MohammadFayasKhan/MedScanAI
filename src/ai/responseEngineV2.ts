@@ -5,6 +5,7 @@
  */
 import type { IntentResult } from './intentEngineV2';
 import type { ChatSession, IntentType, MedScanDatabaseState, Medicine } from '../store/useAppStore';
+import { buildMedicineIntentResponse } from './responseBuilder';
 
 export interface ChatResponse {
   content: string;
@@ -181,6 +182,22 @@ function formatPregnancySafety(m: Medicine): string {
   ].join('\n');
 }
 
+function formatPrice(m: Medicine): string {
+  return buildMedicineIntentResponse('PRICE', m);
+}
+
+function formatAlcoholSafety(m: Medicine): string {
+  return buildMedicineIntentResponse('ALCOHOL_SAFETY', m);
+}
+
+function formatMechanism(m: Medicine): string {
+  return buildMedicineIntentResponse('MECHANISM', m);
+}
+
+function formatQuickTips(m: Medicine): string {
+  return buildMedicineIntentResponse('QUICK_TIPS', m);
+}
+
 function formatSymptomResults(symptom: string, meds: Medicine[]): string {
   const top = meds.slice(0, 5);
   if (!top.length) {
@@ -291,8 +308,12 @@ export function generateResponse(
 
     case 'side_effects':
     case 'dosage':
+    case 'price':
+    case 'alcohol_safety':
     case 'interactions':
-    case 'pregnancy_safety': {
+    case 'pregnancy_safety':
+    case 'mechanism':
+    case 'quick_tips': {
       const medicineId = intent.medicineId ?? context.activeMedicineId ?? currentSession.activeMedicineId ?? null;
       if (!medicineId) return ensureMedicine(intent.type, context);
 
@@ -302,17 +323,25 @@ export function generateResponse(
       const content =
         intent.type === 'side_effects'    ? formatSideEffects(med)
         : intent.type === 'dosage'        ? formatDosage(med)
+        : intent.type === 'price'         ? formatPrice(med)
+        : intent.type === 'alcohol_safety'? formatAlcoholSafety(med)
         : intent.type === 'interactions'  ? formatInteractions(med)
+        : intent.type === 'mechanism'     ? formatMechanism(med)
+        : intent.type === 'quick_tips'    ? formatQuickTips(med)
         : formatPregnancySafety(med);
 
       return {
         content,
-        suggestions: ['Back to overview', 'Side effects', 'Dosage', 'Interactions', 'Pregnancy safety']
+        suggestions: ['Back to overview', 'Price', 'Alcohol safety', 'Side effects', 'Dosage', 'Pregnancy safety', 'Mechanism', 'Quick tips']
           .filter(s => {
             if (intent.type === 'side_effects'    && s === 'Side effects')    return false;
             if (intent.type === 'dosage'          && s === 'Dosage')          return false;
+            if (intent.type === 'price'           && s === 'Price')           return false;
+            if (intent.type === 'alcohol_safety'  && s === 'Alcohol safety')  return false;
             if (intent.type === 'interactions'    && s === 'Interactions')    return false;
             if (intent.type === 'pregnancy_safety'&& s === 'Pregnancy safety')return false;
+            if (intent.type === 'mechanism'       && s === 'Mechanism')       return false;
+            if (intent.type === 'quick_tips'      && s === 'Quick tips')      return false;
             return true;
           })
           .slice(0, 4),

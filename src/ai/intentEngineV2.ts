@@ -136,10 +136,18 @@ export function detectIntent(userMessage: string, context: MedScanDatabaseState)
     if (active) {
       if (/\b(side ?effects?|adverse|reaction|harmful|dangerous)\b/i.test(msg))
         return { type: 'side_effects', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
+      if (/\b(price|cost|mrp|rate|rupees?|₹|pack size)\b/i.test(msg))
+        return { type: 'price', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
       if (/\b(dose|dosage|how much|how many|mg|tablet|times a day|frequency)\b/i.test(msg))
         return { type: 'dosage', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
+      if (/\b(alcohol|drink|beer|wine|whisky)\b/i.test(msg))
+        return { type: 'alcohol_safety', confidence: 0.96, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
       if (/\b(pregnant|pregnancy|breastfeed|breastfeeding|safe for kids|kids|children|pediatric)\b/i.test(msg))
         return { type: 'pregnancy_safety', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
+      if (/\b(mechanism|how.*works?|mode of action)\b/i.test(msg))
+        return { type: 'mechanism', confidence: 0.92, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
+      if (/\b(tips?|advice|instructions?|precautions?)\b/i.test(msg))
+        return { type: 'quick_tips', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
       if (/\b(interact|interaction|combine|mix|take with|together)\b/i.test(msg))
         return { type: 'interactions', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
     }

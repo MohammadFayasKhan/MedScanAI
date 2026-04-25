@@ -8,8 +8,12 @@ export type IntentType =
   | 'symptom_query'
   | 'side_effects'
   | 'dosage'
+  | 'price'
+  | 'alcohol_safety'
   | 'interactions'
   | 'pregnancy_safety'
+  | 'mechanism'
+  | 'quick_tips'
   | 'pediatric_info'
   | 'comparison'
   | 'clarification'
@@ -37,6 +41,24 @@ export interface Medicine {
   warnings: string[];
   contraindications: string[];
   category: string;
+  price?: number | null;
+  currency?: string;
+  packSize?: string;
+  manufacturer?: string;
+  mechanismOfAction?: string;
+  howToUse?: string;
+  quickTips?: string;
+  alcoholSafetyText?: string;
+  alcoholSafetyLabel?: string;
+  pregnancySafetyLabel?: string;
+  breastfeedingSafetyText?: string;
+  breastfeedingSafetyLabel?: string;
+  drivingSafetyText?: string;
+  drivingSafetyLabel?: string;
+  kidneySafetyText?: string;
+  kidneySafetyLabel?: string;
+  liverSafetyText?: string;
+  liverSafetyLabel?: string;
 }
 
 export interface Message {
@@ -1023,4 +1045,3 @@ export const useAppStore = create<MedScanStore>()(
     }
   )
 );
-

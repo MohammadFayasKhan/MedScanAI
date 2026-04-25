@@ -11,6 +11,7 @@ import { useOCR } from '../hooks/useOCR';
 import { useDatabaseContext } from '../context/DatabaseContext';
 import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
 import { useAppStore } from '../store/useAppStore';
+import type { MatchResult } from '../utils/medicine-matcher';
 
 const FEATURES = [
   { icon: 'dataset', title: 'Massive Database', desc: '192K+ medicines indexed offline' },
@@ -22,12 +23,23 @@ const FEATURES = [
 export default function HomePage() {
   const navigate = useNavigate();
   const { isReady, error: dbError, progressMsg } = useDatabaseContext();
-  const { status, progress, scanImage, reset, error: ocrError } = useOCR();
+  const {
+    status,
+    progress,
+    scanImage,
+    reset,
+    error: ocrError,
+    matches,
+    extractedFields,
+    avgConfidence,
+    qualityScore,
+  } = useOCR();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showScanner, setShowScanner] = useState(false);
   const [toast, setToast] = useState('');
 
-  const isProcessing = status === 'scanning' || status === 'processing';
+  const isProcessing = status === 'preprocessing' || status === 'scanning' || status === 'processing';
+  const showOcrPanel = !isProcessing && ['low_confidence', 'not_found', 'error'].includes(status);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -36,15 +48,57 @@ export default function HomePage() {
 
   const handleOCRResult = async (src: File | string) => {
     setShowScanner(false);
-    const medicine = await scanImage(src);
-    if (medicine) {
-      ensureMedicineInStoreFromDb(medicine, false);
-      useAppStore.getState().addToRecent(String(medicine.id));
-      navigate(`/medicine/${medicine.id}`);
-    } else {
-      showToast(ocrError || 'Medicine not found. Try searching manually.');
-      reset();
+    const result = await scanImage(src);
+    if (Array.isArray(result)) return;
+    if (result) {
+      ensureMedicineInStoreFromDb(result, false);
+      useAppStore.getState().addToRecent(String(result.id));
+      navigate(`/medicine/${result.id}`);
     }
+  };
+
+  const handleSelectMatch = (match: MatchResult) => {
+    ensureMedicineInStoreFromDb(match.medicine, false);
+    useAppStore.getState().addToRecent(String(match.medicine.id));
+    reset();
+    navigate(`/medicine/${match.medicine.id}`);
+  };
+
+  const focusManualSearch = () => {
+    reset();
+    const searchInput = document.getElementById('global-search-input') as HTMLInputElement | null;
+    searchInput?.focus();
+    searchInput?.select();
+  };
+
+  const retryCamera = () => {
+    reset();
+    setShowScanner(true);
+  };
+
+  const uploadAgain = () => {
+    reset();
+    fileInputRef.current?.click();
+  };
+
+  const loadingMessage =
+    status === 'preprocessing'
+      ? 'Preprocessing image...'
+      : status === 'scanning'
+        ? 'Scanning medicine text...'
+        : 'Matching medicine...';
+
+  const detectedSummary = [
+    extractedFields.brandCandidates[0],
+    extractedFields.compositionCandidates[0],
+    extractedFields.strengthCandidates[0],
+    extractedFields.formCandidates[0],
+  ].filter(Boolean);
+
+  const confidenceLabel = (score: number) => {
+    if (score >= 75) return { text: 'High', color: '#4ECDC4' };
+    if (score >= 50) return { text: 'Medium', color: '#F5A623' };
+    return { text: 'Low', color: '#E74C3C' };
   };
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +148,99 @@ export default function HomePage() {
             {isReady ? 'Database ready : fully offline' : progressMsg}
           </span>
         </motion.div>
+
+        {/* OCR confidence and confirmation panel */}
+        <AnimatePresence>
+          {showOcrPanel && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="w-full max-w-2xl glass-card p-md"
+            >
+              <div className="flex items-start justify-between gap-md mb-md">
+                <div>
+                  <p className="text-body font-semibold text-on-surface">
+                    {matches.length ? 'Confirm detected medicine' : 'Medicine not confidently detected'}
+                  </p>
+                  <p className="text-metadata text-on-surface-variant mt-xs">
+                    {ocrError || 'Choose the closest match, retry, or search manually.'}
+                  </p>
+                </div>
+                <button
+                  onClick={reset}
+                  className="glass-button px-sm py-xs text-metadata"
+                  aria-label="Dismiss OCR result"
+                >
+                  Dismiss
+                </button>
+              </div>
+
+              {detectedSummary.length > 0 && (
+                <div className="mb-md rounded-xl border border-white/10 bg-white/5 px-md py-sm">
+                  <p className="text-metadata uppercase tracking-wider text-on-surface-variant mb-xs">
+                    Detected
+                  </p>
+                  <p className="text-body text-on-surface">
+                    {detectedSummary.join(' | ')}
+                  </p>
+                  <p className="text-metadata text-on-surface-variant mt-xs">
+                    OCR confidence {avgConfidence}% | Image quality {qualityScore}%
+                  </p>
+                </div>
+              )}
+
+              {matches.length > 0 && (
+                <div className="grid gap-sm mb-md">
+                  {matches.map(match => {
+                    const bucket = confidenceLabel(match.score);
+                    return (
+                      <button
+                        key={match.medicine.id}
+                        onClick={() => handleSelectMatch(match)}
+                        className="text-left rounded-xl border border-white/10 bg-white/5 p-md transition-all hover:border-primary-container hover:bg-white/10"
+                      >
+                        <div className="flex items-start justify-between gap-md">
+                          <div className="min-w-0">
+                            <p className="text-body font-semibold text-on-surface truncate">
+                              {match.medicine.brand_name}
+                            </p>
+                            <p className="text-metadata text-on-surface-variant truncate mt-xs">
+                              {match.medicine.active_substance || match.medicine.manufacturer || 'Medicine'}
+                            </p>
+                            {match.matchedFields.length > 0 && (
+                              <p className="text-metadata text-on-surface-variant mt-xs">
+                                Matched: {match.matchedFields.join(', ')}
+                              </p>
+                            )}
+                          </div>
+                          <span
+                            className="flex-shrink-0 rounded-full px-sm py-xs text-metadata font-semibold"
+                            style={{ color: bucket.color, background: `${bucket.color}18`, border: `1px solid ${bucket.color}35` }}
+                          >
+                            {bucket.text} {match.score}%
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-sm">
+                <button onClick={retryCamera} className="glass-button px-md py-sm text-body">
+                  Retry Camera
+                </button>
+                <button onClick={uploadAgain} className="glass-button px-md py-sm text-body">
+                  Upload Again
+                </button>
+                <button onClick={focusManualSearch} className="chip">
+                  Not listed? Search manually
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Headline */}
         <motion.div
@@ -233,7 +380,7 @@ export default function HomePage() {
       <AnimatePresence>
         {isProcessing && (
           <LoadingOverlay
-            message={status === 'scanning' ? 'Scanning image…' : 'Identifying medicine…'}
+            message={loadingMessage}
             progress={progress}
           />
         )}

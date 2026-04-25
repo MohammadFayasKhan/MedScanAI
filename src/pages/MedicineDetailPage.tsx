@@ -120,6 +120,32 @@ function pickFirstNonEmpty(...vals: Array<string | null | undefined>) {
   return '';
 }
 
+function labelColor(label?: string) {
+  const normalized = (label || '').toLowerCase();
+  if (normalized.includes('safe')) return '#4ECDC4';
+  if (normalized.includes('avoid')) return '#E74C3C';
+  return '#F5A623';
+}
+
+function SafetyCard({ title, label, text }: { title: string; label?: string; text?: string }) {
+  const color = labelColor(label);
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.55)' }}>
+          {title}
+        </p>
+        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ color, background: `${color}18`, border: `1px solid ${color}35` }}>
+          {(label || 'CONSULT_DOCTOR').replace(/_/g, ' ')}
+        </span>
+      </div>
+      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
+        {text?.trim() || NOT_SPECIFIED}
+      </p>
+    </div>
+  );
+}
+
 // ── Skeleton ───────────────────────────────────────────────────────────────────
 function DetailSkeleton() {
   return (
@@ -221,7 +247,21 @@ export default function MedicineDetailPage() {
             <Row label="Form" value={medicine.pharmaceutical_form} />
             <Row label="Strength" value={medicine.strength} />
             <Row label="Manufacturer" value={medicine.manufacturer} />
+            <Row
+              label="Price"
+              value={medicine.price != null ? `${medicine.currency || '₹'}${medicine.price}` : ''}
+            />
+            <Row label="Pack size" value={medicine.pack_size_label || medicine.pack_sizes} />
             <Row label="Category" value={medicine.category} />
+          </Section>
+
+          <Section title="Safety Cards" icon={AlertTriangle} color="#F5A623" defaultOpen>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SafetyCard title="Alcohol" label={medicine.safety_alcohol_label} text={medicine.safety_alcohol_text} />
+              <SafetyCard title="Pregnancy" label={medicine.safety_pregnancy_label} text={medicine.safety_pregnancy_text || medicine.pregnancy_warning} />
+              <SafetyCard title="Driving" label={medicine.safety_driving_label} text={medicine.safety_driving_text || medicine.driving_warning} />
+              <SafetyCard title="Breastfeeding" label={medicine.safety_breastfeeding_label} text={medicine.safety_breastfeeding_text} />
+            </div>
           </Section>
 
           {/* 2. Uses & Indications */}
@@ -241,6 +281,12 @@ export default function MedicineDetailPage() {
               style={{ background: 'rgba(125,216,240,0.06)', border: '1px solid rgba(125,216,240,0.14)', color: 'rgba(255,255,255,0.45)' }}>
               ⚠️ Always follow your doctor's or pharmacist's prescribed dosage and duration. Do not self-adjust.
             </div>
+          </Section>
+
+          <Section title="Mechanism & Quick Tips" icon={BookOpen} color="#4ECDC4">
+            <Row label="Mechanism of action" value={medicine.mechanism_of_action} />
+            <Row label="Quick tips" value={medicine.quick_tips || medicine.typical_dosing} />
+            <Row label="How to use" value={medicine.how_to_use || medicine.administration_tips} />
           </Section>
 
           {/* 4. Side Effects */}

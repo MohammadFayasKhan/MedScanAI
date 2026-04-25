@@ -7,13 +7,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', '*.png', 'sql-wasm/**'],
+      includeAssets: ['favicon.ico', '*.png', 'sql-wasm.wasm', 'sql-wasm-browser.wasm'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024, // 10MB
         runtimeCaching: [
           {
-            urlPattern: /\/db\/medicines\.db/,
+            urlPattern: /\/db\/medscan\.db/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'medicines-db',
@@ -21,7 +21,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\/sql-wasm\/.*/,
+            urlPattern: /\/sql-wasm(?:-browser)?\.wasm$/,
             handler: 'CacheFirst',
             options: { cacheName: 'sql-wasm', expiration: { maxEntries: 5 } },
           },
