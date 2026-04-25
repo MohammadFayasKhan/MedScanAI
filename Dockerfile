@@ -5,8 +5,8 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
+RUN if [ -f public/db/medscan.db.gz ]; then gunzip public/db/medscan.db.gz; fi
 RUN npm run build
-
 FROM nginx:1.27-alpine
 
 # Set up permissions for Hugging Face Spaces (non-root user id 1000)

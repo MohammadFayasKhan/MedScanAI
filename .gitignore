@@ -35,3 +35,4 @@ dist-ssr/
 /public/tessdata/
 
 # Git LFS handles CSV tracking
+/public/db/medscan.db
