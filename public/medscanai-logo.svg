@@ -1,0 +1,29 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="76" y1="60" x2="426" y2="450" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CF0D0"/>
+      <stop offset="0.48" stop-color="#39C5A8"/>
+      <stop offset="1" stop-color="#0D7C68"/>
+    </linearGradient>
+    <linearGradient id="cross" x1="198" y1="162" x2="314" y2="314" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0F2A25"/>
+      <stop offset="1" stop-color="#113B33"/>
+    </linearGradient>
+    <filter id="glow" x="32" y="32" width="448" height="448" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+      <feGaussianBlur stdDeviation="22" result="effect1_foregroundBlur_1_1"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="#0B1412"/>
+  <g filter="url(#glow)">
+    <rect x="112" y="104" width="288" height="288" rx="88" fill="url(#bg)"/>
+  </g>
+  <rect x="128" y="120" width="256" height="256" rx="72" fill="url(#bg)"/>
+  <path d="M232 188C232 179.163 239.163 172 248 172H264C272.837 172 280 179.163 280 188V204H296C304.837 204 312 211.163 312 220V292C312 300.837 304.837 308 296 308H216C207.163 308 200 300.837 200 292V220C200 211.163 207.163 204 216 204H232V188Z" fill="url(#cross)"/>
+  <path d="M232 204H280V194C280 182.954 271.046 174 260 174H252C240.954 174 232 182.954 232 194V204Z" fill="#0A201B"/>
+  <path d="M248 228C248 223.582 251.582 220 256 220C260.418 220 264 223.582 264 228V244H280C284.418 244 288 247.582 288 252C288 256.418 284.418 260 280 260H264V276C264 280.418 260.418 284 256 284C251.582 284 248 280.418 248 276V260H232C227.582 260 224 256.418 224 252C224 247.582 227.582 244 232 244H248V228Z" fill="#DFFAF3"/>
+  <circle cx="372" cy="150" r="10" fill="#C7FFF0" fill-opacity="0.84"/>
+  <circle cx="150" cy="352" r="8" fill="#A3F3DD" fill-opacity="0.74"/>
+</svg>
