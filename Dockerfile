@@ -5,7 +5,7 @@ COPY package*.json ./
 RUN npm ci
 
 COPY . .
-RUN if [ -f public/db/medscan.db.gz ]; then gunzip public/db/medscan.db.gz; fi
+RUN if [ -f public/db/medscan.db.gz ]; then cp public/db/medscan.db.gz /tmp/db.gz && gunzip public/db/medscan.db.gz && mv /tmp/db.gz public/db/medscan.db.gz; fi
 RUN npm run build
 FROM nginx:1.27-alpine
 

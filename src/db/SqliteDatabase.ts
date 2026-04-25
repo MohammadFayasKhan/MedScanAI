@@ -144,12 +144,47 @@ export class SqliteDatabase {
     let bytes = await localforage.getItem<Uint8Array>(DB_CACHE_KEY);
 
     if (!bytes || bytes.byteLength < 1024) {
-      onProgress('Downloading SQLite database...');
+      onProgress('Connecting to database...');
       const response = await fetch(dbUrl(), { cache: 'no-cache' });
       if (!response.ok) {
         throw new Error(`Could not fetch ${dbUrl()} (${response.status})`);
       }
-      bytes = new Uint8Array(await response.arrayBuffer());
+      
+      const reader = response.body?.getReader();
+      if (!reader) {
+        onProgress('Downloading database...');
+        bytes = new Uint8Array(await response.arrayBuffer());
+      } else {
+        const chunks: Uint8Array[] = [];
+        let receivedLength = 0;
+        
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          chunks.push(value);
+          receivedLength += value.length;
+          
+          const mb = (receivedLength / (1024 * 1024)).toFixed(1);
+          const message = `Downloading & extracting database: ${mb} MB...`;
+          onProgress(message);
+          
+          // Log occasionally to prevent console flood
+          if (chunks.length % 50 === 0) {
+            console.log(`[MedScanAI] Database extraction progress: ${mb} MB`);
+          }
+        }
+        
+        console.log(`[MedScanAI] Download complete. Total extracted: ${(receivedLength / (1024 * 1024)).toFixed(1)} MB`);
+        onProgress('Assembling database...');
+        bytes = new Uint8Array(receivedLength);
+        let position = 0;
+        for (const chunk of chunks) {
+          bytes.set(chunk, position);
+          position += chunk.length;
+        }
+      }
+
       onProgress('Saving database for offline use...');
       await localforage.setItem(DB_CACHE_KEY, bytes);
     }
