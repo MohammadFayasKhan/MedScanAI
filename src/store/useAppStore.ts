@@ -63,8 +63,10 @@ export interface Medicine {
   drivingSafetyLabel?: string;
   kidneySafetyText?: string;
   kidneySafetyLabel?: string;
-  liverSafetyText?: string;
   liverSafetyLabel?: string;
+  review_excellent?: string;
+  review_average?: string;
+  review_poor?: string;
 }
 
 export interface Message {
