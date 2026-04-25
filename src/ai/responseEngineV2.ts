@@ -139,7 +139,7 @@ function formatDosage(m: Medicine): string {
     '**Older adults:**',
     m.dosage.elderly || 'Use cautiously and follow medical advice.',
     '',
-    '*Disclaimer: Always follow your doctor\\'s prescription. The exact dose and duration depend on what you are being treated for.*'
+    "*Disclaimer: Always follow your doctor's prescription. The exact dose and duration depend on what you are being treated for.*"
   ].join('\n');
 }
 
