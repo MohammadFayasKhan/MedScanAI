@@ -14,6 +14,7 @@ export type IntentType =
   | 'side_effects'
   | 'dosage'
   | 'price'
+  | 'rating'
   | 'alcohol_safety'
   | 'interactions'
   | 'pregnancy_safety'

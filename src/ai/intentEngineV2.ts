@@ -134,21 +134,23 @@ export function detectIntent(userMessage: string, context: MedScanDatabaseState)
   if (context.activeMedicineId && words.length <= 8) {
     const active = context.medicines.get(context.activeMedicineId);
     if (active) {
-      if (/\b(side ?effects?|adverse|reaction|harmful|dangerous)\b/i.test(msg))
+      if (/\b(side ?effects?|adverse|reaction|harmful|dangerous|risks?)\b/i.test(msg))
         return { type: 'side_effects', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(price|cost|mrp|rate|rupees?|₹|pack size)\b/i.test(msg))
+      if (/\b(price|cost|mrp|rate|rupees?|₹|pack size|money|buy)\b/i.test(msg))
         return { type: 'price', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(dose|dosage|how much|how many|mg|tablet|times a day|frequency)\b/i.test(msg))
+      if (/\b(rating|ratings|review|reviews|feedback|score|stars?)\b/i.test(msg))
+        return { type: 'rating', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
+      if (/\b(dose|dosage|how much|how many|mg|tablet|times a day|frequency|schedule|when to take)\b/i.test(msg))
         return { type: 'dosage', confidence: 0.95, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(alcohol|drink|beer|wine|whisky)\b/i.test(msg))
+      if (/\b(alcohol|drink|beer|wine|whisky|liquor)\b/i.test(msg))
         return { type: 'alcohol_safety', confidence: 0.96, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(pregnant|pregnancy|breastfeed|breastfeeding|safe for kids|kids|children|pediatric)\b/i.test(msg))
+      if (/\b(pregnant|pregnancy|breastfeed|breastfeeding|safe for kids|kids|children|pediatric|baby|infant)\b/i.test(msg))
         return { type: 'pregnancy_safety', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(mechanism|how.*works?|mode of action)\b/i.test(msg))
+      if (/\b(mechanism|how.*works?|mode of action|what it does|function)\b/i.test(msg))
         return { type: 'mechanism', confidence: 0.92, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(tips?|advice|instructions?|precautions?)\b/i.test(msg))
+      if (/\b(tips?|advice|instructions?|precautions?|warning)\b/i.test(msg))
         return { type: 'quick_tips', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
-      if (/\b(interact|interaction|combine|mix|take with|together)\b/i.test(msg))
+      if (/\b(interact|interactions?|combine|mix|take with|together|with other)\b/i.test(msg))
         return { type: 'interactions', confidence: 0.9, medicineId: context.activeMedicineId, entities: [active.name], followUp: true };
     }
   }

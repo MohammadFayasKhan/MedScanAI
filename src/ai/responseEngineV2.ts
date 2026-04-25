@@ -86,104 +86,107 @@ function ensureMedicine(intent: IntentType, context: MedScanDatabaseState): Chat
 
 /* ── Format functions (no em-dashes, clean spacing) ──────────────── */
 function formatOverview(m: Medicine): string {
-  const uses = shortList(m.uses, 6);
+  const uses = shortList(m.uses, 4);
   return [
-    `**${m.name}**`,
+    `Here is an overview of **${m.name}** (generic name: ${m.genericName}).`,
     '',
-    `**Class:** ${m.class} (generic: ${m.genericName})`,
-    '',
-    '**What it is commonly used for:**',
+    `It belongs to a class of medicines known as **${m.class}**, and it is most commonly used to treat:`,
     bullet(uses),
     '',
-    `**Common adult dose:** ${m.dosage.adult}`,
+    `The typical dose is generally **${m.dosage.adult}**, but this can vary depending on your specific condition.`,
     '',
-    'Ask me about dosage, side effects, interactions, or safety.',
+    'Let me know if you would like to dive deeper into its side effects, dosage instructions, or safety warnings!'
   ].join('\n');
 }
 
 function formatSideEffects(m: Medicine): string {
   const common = m.sideEffects.common.length
     ? m.sideEffects.common
-    : ['No common side effects listed for this entry'];
+    : ['No common side effects are widely reported for this medicine.'];
   const rare = m.sideEffects.rare.length
     ? m.sideEffects.rare
-    : ['No rare effects listed for this entry'];
-  const notes = shortList(m.warnings, 2);
+    : ['No severe rare effects are listed.'];
 
   return [
-    `**Side Effects of ${m.name}**`,
+    `Like most medicines, **${m.name}** can cause some side effects, though not everyone gets them.`,
     '',
-    '**Common (often mild):**',
+    '**Common side effects (usually mild and go away as your body adjusts):**',
     bullet(common),
     '',
-    '**Rare or serious (seek medical help if severe):**',
+    '**Rare but serious side effects (seek medical attention if you experience these):**',
     bullet(rare),
     '',
-    notes.length ? '**Key notes:**\n' + bullet(notes) : '',
-    '',
-    'Note: Most side effects ease as your body adjusts. Consult a doctor if severe symptoms persist.',
-  ].filter(Boolean).join('\n');
+    '*Note: This is not a complete list. Always consult your doctor if a side effect bothers you or does not go away.*'
+  ].join('\n');
 }
 
 function formatDosage(m: Medicine): string {
+  const isPediatric = m.name.toLowerCase().includes('oral suspension') || m.name.toLowerCase().includes('syrup') || m.name.toLowerCase().includes('drops');
+  
+  const adultText = isPediatric && m.dosage.adult.toLowerCase().includes('child') 
+    ? m.dosage.adult.replace(/Adults:/i, '').trim() 
+    : m.dosage.adult;
+
   return [
-    `**Dosage Guide for ${m.name}**`,
+    `Here is the general dosage guidance for **${m.name}**:`,
     '',
-    '**Adults:**',
-    m.dosage.adult,
+    isPediatric ? '**General Dosing:**' : '**Adults:**',
+    adultText || 'Consult a doctor for appropriate dosage.',
     '',
     '**Children:**',
-    m.dosage.pediatric,
+    m.dosage.pediatric || 'Please consult a pediatrician for exact child dosing.',
     '',
     '**Older adults:**',
-    m.dosage.elderly,
+    m.dosage.elderly || 'Use cautiously and follow medical advice.',
     '',
-    'Note: Always follow your doctor\'s prescription. Do not exceed the recommended dose.',
-    '',
-    'If you share the age and condition being treated, I can help you find the most relevant dosage.',
+    '*Disclaimer: Always follow your doctor\\'s prescription. The exact dose and duration depend on what you are being treated for.*'
   ].join('\n');
 }
 
 function formatInteractions(m: Medicine): string {
   const interactions = m.interactions.length
     ? m.interactions
-    : ['No common interactions listed for this entry'];
+    : ['There are no major common interactions listed for this medicine.'];
 
   return [
-    `**Interactions for ${m.name}**`,
+    `When taking **${m.name}**, it is important to be careful about what you mix it with.`,
     '',
-    '**Medicines or substances to be cautious with:**',
-    bullet(shortList(interactions, 8)),
+    '**You should be cautious with the following:**',
+    bullet(shortList(interactions, 6)),
     '',
-    '**Practical tip:**',
-    'List your current medicines and I can highlight the most relevant interaction risks.',
-    '',
-    'Note: Always inform your doctor about all medicines you are taking.',
+    '*Tip: If you share what other medications or supplements you are currently taking, I can help check for specific interactions!*'
   ].join('\n');
 }
 
 function formatPregnancySafety(m: Medicine): string {
-  const cautions = shortList(
-    [
-      m.pregnancySafety,
-      ...(m.contraindications.length ? [`Contraindications: ${m.contraindications.join(', ')}`] : []),
-    ].filter(Boolean),
-    4
-  );
+  const cautions = [
+    m.pregnancySafety,
+    ...(m.contraindications.length ? [`**Contraindications:** ${m.contraindications.join(', ')}`] : []),
+  ].filter(Boolean);
 
   return [
-    `**Pregnancy and Breastfeeding Safety for ${m.name}**`,
+    `Here is what you need to know about taking **${m.name}** during pregnancy and breastfeeding:`,
     '',
     bullet(cautions),
     '',
-    'Note: Always consult your doctor before taking any medicine during pregnancy or breastfeeding.',
-    '',
-    'Share your trimester and whether you are breastfeeding, and I can tailor the guidance.',
+    '*Please remember: You should always consult your doctor or gynecologist before taking any new medication during pregnancy.*'
   ].join('\n');
 }
 
 function formatPrice(m: Medicine): string {
   return buildMedicineIntentResponse('PRICE', m);
+}
+
+function formatRating(m: Medicine): string {
+  return [
+    `Here is how patients typically rate **${m.name}**:`,
+    '',
+    `- **Excellent:** ${m.review_excellent || '0'}%`,
+    `- **Average:** ${m.review_average || '0'}%`,
+    `- **Poor:** ${m.review_poor || '0'}%`,
+    '',
+    '*Keep in mind that individual experiences can vary significantly based on the condition being treated.*'
+  ].join('\n');
 }
 
 function formatAlcoholSafety(m: Medicine): string {
@@ -309,6 +312,7 @@ export function generateResponse(
     case 'side_effects':
     case 'dosage':
     case 'price':
+    case 'rating':
     case 'alcohol_safety':
     case 'interactions':
     case 'pregnancy_safety':
@@ -324,19 +328,21 @@ export function generateResponse(
         intent.type === 'side_effects'    ? formatSideEffects(med)
         : intent.type === 'dosage'        ? formatDosage(med)
         : intent.type === 'price'         ? formatPrice(med)
+        : intent.type === 'rating'        ? formatRating(med)
         : intent.type === 'alcohol_safety'? formatAlcoholSafety(med)
         : intent.type === 'interactions'  ? formatInteractions(med)
         : intent.type === 'mechanism'     ? formatMechanism(med)
         : intent.type === 'quick_tips'    ? formatQuickTips(med)
         : formatPregnancySafety(med);
 
-      return {
-        content,
-        suggestions: ['Back to overview', 'Price', 'Alcohol safety', 'Side effects', 'Dosage', 'Pregnancy safety', 'Mechanism', 'Quick tips']
+      const allSuggestions = ['Side effects', 'Dosage', 'Interactions', 'Pregnancy safety', 'Price', 'Reviews', 'Quick tips', 'Alcohol safety', 'Mechanism'];
+      
+      const suggestions = allSuggestions
           .filter(s => {
             if (intent.type === 'side_effects'    && s === 'Side effects')    return false;
             if (intent.type === 'dosage'          && s === 'Dosage')          return false;
             if (intent.type === 'price'           && s === 'Price')           return false;
+            if (intent.type === 'rating'          && s === 'Reviews')         return false;
             if (intent.type === 'alcohol_safety'  && s === 'Alcohol safety')  return false;
             if (intent.type === 'interactions'    && s === 'Interactions')    return false;
             if (intent.type === 'pregnancy_safety'&& s === 'Pregnancy safety')return false;
@@ -344,7 +350,12 @@ export function generateResponse(
             if (intent.type === 'quick_tips'      && s === 'Quick tips')      return false;
             return true;
           })
-          .slice(0, 4),
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 4);
+
+      return {
+        content,
+        suggestions,
         metadata: { type: intent.type, medicineId: med.id },
         nextActiveMedicineId: med.id,
         nextSessionType: 'medicine',
