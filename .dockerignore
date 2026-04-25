@@ -4,3 +4,6 @@ dist
 .gitignore
 .DS_Store
 *.log
+
+# Ignore raw data files to avoid Docker build context bloat
+*.csv
