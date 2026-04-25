@@ -1,3 +1,8 @@
+/**
+ * @file PageTransition.tsx
+ * @description PageTransition.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import { motion } from 'framer-motion';
 
 export default function PageTransition({ children }: { children: React.ReactNode }) {

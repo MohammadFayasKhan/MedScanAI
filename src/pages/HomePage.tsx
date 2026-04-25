@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import WebcamScanner from '../components/WebcamScanner';
 import LoadingOverlay from '../components/LoadingOverlay';
 import { useOCR } from '../hooks/useOCR';
-import { useDatabaseContext } from '../context/DatabaseContext';
+import { useDatabaseContext } from '../context/useDatabaseContext';
 import { ensureMedicineInStoreFromDb } from '../services/medicineSync';
 import { useAppStore } from '../store/useAppStore';
 import type { MatchResult } from '../utils/medicine-matcher';

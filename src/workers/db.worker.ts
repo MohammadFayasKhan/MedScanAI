@@ -1,3 +1,8 @@
+/**
+ * @file db.worker.ts
+ * @description Legacy worker-based database loader retained for compatibility with historical data flows.
+ * @module Workers
+ */
 import Papa from 'papaparse';
 import { Medicine } from '../types/medicine';
 import localforage from 'localforage';

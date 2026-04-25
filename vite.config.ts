@@ -1,3 +1,8 @@
+/**
+ * @file vite.config.ts
+ * @description Vite and PWA build configuration, including offline caching rules and runtime headers.
+ * @module Config
+ */
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';

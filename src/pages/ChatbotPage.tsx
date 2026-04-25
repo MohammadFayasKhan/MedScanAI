@@ -13,7 +13,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../store/useAppStore';
 import { processUserMessageV2 } from '../ai/processUserMessageV2';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../context/useToast';
 import { ensureMedicineInStoreById } from '../services/medicineSync';
 import MessageBubble from '../components/MessageBubble';
 import ContextHeader from '../components/ContextHeader';

@@ -1,3 +1,8 @@
+/**
+ * @file eslint.config.js
+ * @description ESLint rules and project linting configuration for production TypeScript and React code.
+ * @module Config
+ */
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

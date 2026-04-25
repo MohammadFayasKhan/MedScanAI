@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getAllMedicines, searchMedicines } from '../db/database';
 import { Medicine } from '../types/medicine';
-import { useDatabaseContext } from '../context/DatabaseContext';
+import { useDatabaseContext } from '../context/useDatabaseContext';
 
 const CATEGORIES = [
   'All', 'Antibiotic', 'Analgesic', 'Antihistamine', 'Antacid',

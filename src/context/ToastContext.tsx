@@ -1,4 +1,9 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+/**
+ * @file ToastContext.tsx
+ * @description Provides application-wide toast notifications and renders the toast container.
+ * @module Context
+ */
+import { createContext, useCallback, useMemo, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import ToastContainer, { ToastMessage, ToastType } from '../components/ui/Toast';
 
@@ -32,6 +37,4 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast() {
-  return useContext(ToastContext);
-}
+export { ToastContext };

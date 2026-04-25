@@ -1,3 +1,8 @@
+/**
+ * @file GlobalSearch.tsx
+ * @description GlobalSearch.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,7 +58,6 @@ export default function GlobalSearch({ onFocusChange }: GlobalSearchProps) {
   };
 
   const handleSelectMedicine = (med: Medicine) => {
-    console.log('[MedScan] selected medicine from search', { medicineId: med.id, name: med.brand_name });
     ensureMedicineInStoreFromDb(med, false);
     useAppStore.getState().addToRecent(String(med.id));
     addToHistory(med.id, med.brand_name, 'manual');

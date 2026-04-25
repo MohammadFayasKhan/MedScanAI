@@ -1,3 +1,8 @@
+/**
+ * @file SqliteDatabase.ts
+ * @description Browser SQLite engine wrapper with IndexedDB caching and query helpers for medicine search and detail reads.
+ * @module Database
+ */
 import initSqlJs, { type Database as SqlJsDatabase, type BindParams } from 'sql.js';
 import localforage from 'localforage';
 import type { Medicine } from '../types/medicine';

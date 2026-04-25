@@ -1,3 +1,8 @@
+/**
+ * @file ConfirmationDialog.tsx
+ * @description ConfirmationDialog.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import AnimatedButton from '../AnimatedButton';
 import Modal from './Modal';
 

@@ -1,3 +1,8 @@
+/**
+ * @file AnimatedButton.tsx
+ * @description AnimatedButton.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import { motion, HTMLMotionProps } from 'framer-motion';
 
 interface AnimatedButtonProps extends HTMLMotionProps<"button"> {

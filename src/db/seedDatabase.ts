@@ -1,3 +1,8 @@
+/**
+ * @file seedDatabase.ts
+ * @description Static fallback medicine dataset used when persisted data is missing or reset is requested.
+ * @module Database
+ */
 import type { Medicine } from '../store/useAppStore';
 
 export const seedMedicines: Medicine[] = [

@@ -1,3 +1,8 @@
+/**
+ * @file intentEngine.ts
+ * @description intentEngine.ts module implementation used by the MedScanAI application.
+ * @module AI
+ */
 export type MedicineIntent =
   | 'PRICE'
   | 'DOSAGE'

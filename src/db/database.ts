@@ -1,3 +1,8 @@
+/**
+ * @file database.ts
+ * @description Database facade used by application code to initialize and query the offline SQLite data layer.
+ * @module Database
+ */
 import { sqliteDatabase } from './SqliteDatabase';
 
 let isReady = false;

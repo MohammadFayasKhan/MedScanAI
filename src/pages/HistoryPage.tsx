@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useHistory } from '../hooks/useHistory';
 import HistoryCard from '../components/HistoryCard';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../context/useToast';
 
 export default function HistoryPage() {
   const { history, clear } = useHistory();

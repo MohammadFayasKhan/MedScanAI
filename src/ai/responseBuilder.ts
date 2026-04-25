@@ -1,3 +1,8 @@
+/**
+ * @file responseBuilder.ts
+ * @description responseBuilder.ts module implementation used by the MedScanAI application.
+ * @module AI
+ */
 import type { Medicine } from '../store/useAppStore';
 import type { MedicineIntent } from './intentEngine';
 

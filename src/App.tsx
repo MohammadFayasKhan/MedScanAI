@@ -4,7 +4,8 @@
  */
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { DatabaseProvider, useDatabaseContext } from './context/DatabaseContext';
+import { DatabaseProvider } from './context/DatabaseContext';
+import { useDatabaseContext } from './context/useDatabaseContext';
 import { ToastProvider } from './context/ToastContext';
 import DataLoadingScreen from './components/ui/DataLoadingScreen';
 import Navbar from './components/Navbar';

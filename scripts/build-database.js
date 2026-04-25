@@ -26,6 +26,10 @@ const OUTPUT_DIR = path.join(ROOT, 'public', 'db');
 const OUTPUT_DB = path.join(OUTPUT_DIR, 'medscan.db');
 const CHUNK_SIZE = Number.parseInt(process.env.MEDSCAN_CHUNK_SIZE || '500', 10);
 
+function writeInfo(message) {
+  process.stdout.write(`${message}\n`);
+}
+
 const MEDICINE_COLUMNS = [
   'canonical_name',
   'brand_name',
@@ -454,7 +458,7 @@ async function parseRawStream(db, statements) {
       rowCount += buffer.length;
       buffer = [];
       if (rowCount % 5_000 === 0) {
-        console.log(`Processed ${rowCount.toLocaleString()} raw rows (${errors} parse warnings).`);
+        writeInfo(`Processed ${rowCount.toLocaleString()} raw rows (${errors} parse warnings).`);
       }
     };
 
@@ -487,29 +491,29 @@ async function parseRawStream(db, statements) {
 
 async function main() {
   Object.values(CSV_FILES).forEach(requiredFile);
-  console.log('Creating SQLite database at:', OUTPUT_DB);
+  writeInfo(`Creating SQLite database at: ${OUTPUT_DB}`);
   const db = createDatabase();
   const statements = prepareStatements(db);
 
   try {
-    console.log('Processing AZ dataset...');
+    writeInfo('Processing AZ dataset...');
     const azRows = parseWholeCsv(CSV_FILES.az);
     ingestRows(db, statements, 'az', azRows, 0, fromAz);
-    console.log(`Inserted/merged ${azRows.length.toLocaleString()} AZ rows.`);
+    writeInfo(`Inserted/merged ${azRows.length.toLocaleString()} AZ rows.`);
 
-    console.log('Processing details dataset...');
+    writeInfo('Processing details dataset...');
     const detailsRows = parseWholeCsv(CSV_FILES.details);
     ingestRows(db, statements, 'details', detailsRows, 0, fromDetails);
-    console.log(`Inserted/merged ${detailsRows.length.toLocaleString()} details rows.`);
+    writeInfo(`Inserted/merged ${detailsRows.length.toLocaleString()} details rows.`);
 
-    console.log(`Streaming raw dataset in chunks of ${CHUNK_SIZE} rows...`);
+    writeInfo(`Streaming raw dataset in chunks of ${CHUNK_SIZE} rows...`);
     const raw = await parseRawStream(db, statements);
-    console.log(`Inserted/merged ${raw.rowCount.toLocaleString()} raw rows.`);
+    writeInfo(`Inserted/merged ${raw.rowCount.toLocaleString()} raw rows.`);
 
-    console.log('Rebuilding full-text index...');
+    writeInfo('Rebuilding full-text index...');
     statements.insertFts.run();
 
-    console.log('Optimizing database...');
+    writeInfo('Optimizing database...');
     db.exec('ANALYZE; PRAGMA wal_checkpoint(TRUNCATE); VACUUM;');
 
     const counts = db.prepare(`
@@ -517,8 +521,8 @@ async function main() {
         (SELECT COUNT(*) FROM medicines) AS medicines
     `).get();
     const sizeMb = fs.statSync(OUTPUT_DB).size / 1024 / 1024;
-    console.log(`Done. ${counts.medicines.toLocaleString()} merged medicines.`);
-    console.log(`Database size: ${sizeMb.toFixed(1)} MB`);
+    writeInfo(`Done. ${counts.medicines.toLocaleString()} merged medicines.`);
+    writeInfo(`Database size: ${sizeMb.toFixed(1)} MB`);
   } finally {
     db.close();
   }

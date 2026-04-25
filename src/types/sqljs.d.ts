@@ -1,3 +1,8 @@
+/**
+ * @file sqljs.d.ts
+ * @description Type declarations for sql.js APIs used by the browser SQLite runtime.
+ * @module Types
+ */
 declare module 'sql.js' {
   export interface SqlJsStatic {
     Database: new (data?: Uint8Array) => Database;

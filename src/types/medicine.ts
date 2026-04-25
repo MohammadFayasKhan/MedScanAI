@@ -1,3 +1,8 @@
+/**
+ * @file medicine.ts
+ * @description Shared TypeScript interfaces for medicines, chat messages, scan history, and search results.
+ * @module Types
+ */
 export interface Medicine {
   id: number;
   canonical_name?: string;

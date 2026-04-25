@@ -1,3 +1,8 @@
+/**
+ * @file processUserMessageV2.ts
+ * @description processUserMessageV2.ts module implementation used by the MedScanAI application.
+ * @module AI
+ */
 import { detectIntent } from './intentEngineV2';
 import { generateResponse } from './responseEngineV2';
 import { useAppStore } from '../store/useAppStore';
@@ -25,7 +30,6 @@ export async function processUserMessageV2(rawText: string) {
     metadata: state.activeMedicineId ? { medicineId: state.activeMedicineId } : undefined,
   };
 
-  console.log('[MedScan] user message', { text, activeMedicineId: state.activeMedicineId });
   state.addMessage(userMsg);
   state.setTyping(true);
 
@@ -54,10 +58,7 @@ export async function processUserMessageV2(rawText: string) {
       }
     }
 
-    console.log('[MedScan] intent', intent);
-
     const response = generateResponse(intent, fresh, fresh.currentChatSession);
-    console.log('[MedScan] response metadata', response.metadata);
 
     if (response.nextSessionType && response.nextSessionType !== fresh.currentChatSession.type) {
       fresh.startNewChatSession(response.nextActiveMedicineId ?? undefined, response.nextSessionType);
@@ -96,4 +97,3 @@ export async function processUserMessageV2(rawText: string) {
     useAppStore.getState().setTyping(false);
   }
 }
-

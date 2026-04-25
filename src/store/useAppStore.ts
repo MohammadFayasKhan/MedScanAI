@@ -1,3 +1,8 @@
+/**
+ * @file useAppStore.ts
+ * @description useAppStore.ts module implementation used by the MedScanAI application.
+ * @module State
+ */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';

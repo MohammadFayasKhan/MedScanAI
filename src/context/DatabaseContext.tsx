@@ -2,7 +2,7 @@
  * MedScanAI : Database Context
  * Initialises the Web Worker once and exposes isReady + progressMsg.
  */
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useEffect, useState, ReactNode } from 'react';
 import { initDatabase } from '../db/database';
 
 interface DatabaseContextValue {
@@ -45,6 +45,4 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useDatabaseContext() {
-  return useContext(DatabaseContext);
-}
+export { DatabaseContext };

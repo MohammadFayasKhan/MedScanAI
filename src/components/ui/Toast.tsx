@@ -1,3 +1,8 @@
+/**
+ * @file Toast.tsx
+ * @description Toast.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';

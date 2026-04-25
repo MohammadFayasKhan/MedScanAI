@@ -1,3 +1,8 @@
+/**
+ * @file SuggestionChips.tsx
+ * @description SuggestionChips.tsx module implementation used by the MedScanAI application.
+ * @module Components
+ */
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedButton from '../AnimatedButton';
 

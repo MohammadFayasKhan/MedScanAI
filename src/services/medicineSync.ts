@@ -1,3 +1,8 @@
+/**
+ * @file medicineSync.ts
+ * @description medicineSync.ts module implementation used by the MedScanAI application.
+ * @module Services
+ */
 import { getMedicineById, searchMedicines } from '../db/database';
 import type { Medicine as DbMedicine } from '../types/medicine';
 import { useAppStore, type Medicine as StoreMedicine } from '../store/useAppStore';
