@@ -168,6 +168,9 @@ export function useOCR() {
     try {
       setState({ ...createInitialState(), status: 'preprocessing', progress: 8 });
 
+      // Yield main thread to allow loading animation to mount and start spinning
+      await new Promise(resolve => setTimeout(resolve, 50));
+
       const preprocessed = await preprocessImage(source);
       setState((current) => ({
         ...current,

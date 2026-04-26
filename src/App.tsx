@@ -10,11 +10,11 @@ import { ToastProvider } from './context/ToastContext';
 import DataLoadingScreen from './components/ui/DataLoadingScreen';
 import Navbar from './components/Navbar';
 
-const HomePage           = lazy(() => import('./pages/HomePage'));
+const HomePage = lazy(() => import('./pages/HomePage'));
 const MedicineDetailPage = lazy(() => import('./pages/MedicineDetailPage'));
-const ChatbotPage        = lazy(() => import('./pages/ChatbotPage'));
-const HistoryPage        = lazy(() => import('./pages/HistoryPage'));
-const KnowledgeBasePage  = lazy(() => import('./pages/KnowledgeBasePage'));
+const ChatbotPage = lazy(() => import('./pages/ChatbotPage'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const KnowledgeBasePage = lazy(() => import('./pages/KnowledgeBasePage'));
 
 function PageLoader() {
   return (
@@ -57,12 +57,12 @@ function AppRoutes() {
       <Navbar />
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route path="/"              element={<HomePage />}           />
-          <Route path="/chat"          element={<ChatbotPage />}        />
-          <Route path="/medicine/:id"  element={<MedicineDetailPage />} />
-          <Route path="/history"       element={<HistoryPage />}        />
-          <Route path="/knowledge"     element={<KnowledgeBasePage />}  />
-          <Route path="*"              element={<HomePage />}           />
+          <Route path="/" element={<HomePage />} />
+          <Route path="/chat" element={<ChatbotPage />} />
+          <Route path="/medicine/:id" element={<MedicineDetailPage />} />
+          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/knowledge" element={<KnowledgeBasePage />} />
+          <Route path="*" element={<HomePage />} />
         </Routes>
       </Suspense>
     </div>
