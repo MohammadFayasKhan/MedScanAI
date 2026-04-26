@@ -3,3 +3,4 @@
 *.wasm filter=lfs diff=lfs merge=lfs -text
 public/db/medscan_optimized_dataset.csv filter=lfs diff=lfs merge=lfs -text
 public/db/medscan.db.gz filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
