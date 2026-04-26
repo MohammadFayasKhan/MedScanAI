@@ -242,7 +242,6 @@ export default function ChatbotPage() {
   const seenRef    = useRef<Set<string> | null>(null);
 
   const activeMedicine      = activeMedicineId ? medicines.get(activeMedicineId) : null;
-  const activeMedicineLabel = activeMedicine?.name ?? 'this medicine';
 
   if (!seenRef.current) seenRef.current = new Set(messages.map(m => m.id));
 
@@ -308,13 +307,6 @@ export default function ChatbotPage() {
     s.messages.some(m => !(m.role === 'assistant' && m.metadata?.type === 'welcome'));
 
   const allSessions = [currentChatSession, ...previousChatSessions].filter(hasRealMessages);
-
-  const dynamicChips = activeMedicine && messages.length <= 1 ? [
-    `Dosage for ${activeMedicineLabel}?`,
-    `Side effects of ${activeMedicineLabel}?`,
-    `Is ${activeMedicineLabel} safe for pregnancy?`,
-    'Drug interactions',
-  ] : [];
 
   const canSend = !!text.trim() && !isTyping;
 
@@ -441,7 +433,6 @@ export default function ChatbotPage() {
               hasActiveMedicine={!!activeMedicineId}
               isTyping={isTyping}
               onSend={handleSend}
-              dynamicChips={dynamicChips}
             />
 
             <div ref={bottomRef} />

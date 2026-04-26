@@ -25,7 +25,27 @@ export type IntentType =
   | 'clarification'
   | 'greeting'
   | 'off_topic'
-  | 'general';
+  | 'general'
+  // Extended intents
+  | 'usage_instructions'
+  | 'storage_query'
+  | 'missed_dose'
+  | 'overdose_emergency'
+  | 'composition_query'
+  | 'contraindications_query'
+  | 'alternatives_query'
+  | 'driving_safety'
+  | 'lifestyle_diet'
+  | 'pediatric_query'
+  | 'geriatric_query'
+  | 'impairment_query'
+  | 'allergy_query'
+  | 'discontinuation_query'
+  | 'efficacy_query'
+  | 'long_term_use'
+  | 'breastfeeding_safety'
+  | 'kidney_safety'
+  | 'liver_safety';
 
 export interface Medicine {
   id: string;
@@ -112,6 +132,7 @@ export interface MedScanDatabaseState {
   isSearchFocused: boolean;
   sidebarOpen: boolean;
   currentRoute: string;
+  currentSuggestions: string[];
 
   // Metadata
   appVersion: string;
@@ -158,6 +179,7 @@ export interface DatabaseActions {
   setSearchFocused: (focused: boolean) => void;
   toggleSidebar: () => void;
   setRoute: (route: string) => void;
+  setSuggestions: (suggestions: string[]) => void;
 
   // Persistence
   saveToStorage: () => void;
@@ -460,6 +482,7 @@ function defaultState(): MedScanDatabaseState {
     isSearchFocused: false,
     sidebarOpen: true,
     currentRoute: '/',
+    currentSuggestions: [],
 
     appVersion: CURRENT_APP_VERSION,
     lastSyncAt: 0,
@@ -788,6 +811,10 @@ export const useAppStore = create<MedScanStore>()(
         get().saveToStorage();
       },
 
+      setSuggestions: (suggestions) => {
+        set({ currentSuggestions: suggestions });
+      },
+
       saveToStorage: () => {
         const state = get();
         const snapshot: MedScanDatabaseState = {
@@ -805,6 +832,7 @@ export const useAppStore = create<MedScanStore>()(
           isSearchFocused: state.isSearchFocused,
           sidebarOpen: state.sidebarOpen,
           currentRoute: state.currentRoute,
+          currentSuggestions: state.currentSuggestions,
           appVersion: state.appVersion,
           lastSyncAt: state.lastSyncAt,
           dataVersion: state.dataVersion,
@@ -876,6 +904,7 @@ export const useAppStore = create<MedScanStore>()(
           isSearchFocused: state.isSearchFocused,
           sidebarOpen: state.sidebarOpen,
           currentRoute: state.currentRoute,
+          currentSuggestions: state.currentSuggestions,
           appVersion: state.appVersion,
           lastSyncAt: state.lastSyncAt,
           dataVersion: state.dataVersion,

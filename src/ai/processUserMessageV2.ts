@@ -1,7 +1,7 @@
 /**
  * @file processUserMessageV2.ts
- * @description processUserMessageV2.ts module implementation used by the MedScanAI application.
- * @module AI
+ * Processes user messages: detect intent → generate response → update store.
+ * Also saves AI suggestions to store so SuggestionChips can read them dynamically.
  */
 import { detectIntent } from './intentEngineV2';
 import { generateResponse } from './responseEngineV2';
@@ -9,13 +9,8 @@ import { useAppStore } from '../store/useAppStore';
 import type { Message } from '../store/useAppStore';
 import { ensureMedicineInStoreByQuery } from '../services/medicineSync';
 
-function now() {
-  return Date.now();
-}
-
-function id(prefix: string) {
-  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
+function now() { return Date.now(); }
+function id(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`; }
 
 export async function processUserMessageV2(rawText: string) {
   const text = rawText.trim();
@@ -37,19 +32,18 @@ export async function processUserMessageV2(rawText: string) {
     let fresh = useAppStore.getState();
     let intent = detectIntent(text, fresh);
 
-    // Fallback: if medicine lookup failed in the lightweight store, try the CSV DB,
-    // hydrate the matched medicine into the app store, and re-run intent detection.
+    // Fallback: if no match in lightweight store, try the CSV DB
     if (
       !fresh.activeMedicineId &&
       (intent.type === 'general' || intent.type === 'clarification') &&
       text.trim().length >= 3 &&
-      text.trim().split(/\s+/).length <= 6
+      text.trim().split(/\s+/).length <= 8
     ) {
       const lowered = text.toLowerCase();
-      const isLikelyFollowupQuestion =
-        /\b(side effects?|dosage|dose|interactions?|pregnan|symptom|fever|allergy|compare|versus|vs)\b/i.test(lowered);
+      const isLikelyFollowup =
+        /\b(side effects?|dosage|dose|interactions?|pregnan|symptom|fever|allergy|compare|versus|vs|how to|store|miss|overdose)\b/i.test(lowered);
 
-      if (!isLikelyFollowupQuestion) {
+      if (!isLikelyFollowup) {
         const found = await ensureMedicineInStoreByQuery(text, true);
         if (found) {
           fresh = useAppStore.getState();
@@ -68,6 +62,11 @@ export async function processUserMessageV2(rawText: string) {
       fresh.setActiveMedicine(response.nextActiveMedicineId, { clearChat: false });
     }
 
+    // Save dynamic suggestions to store
+    if (response.suggestions?.length) {
+      useAppStore.getState().setSuggestions(response.suggestions);
+    }
+
     const assistantMsg: Message = {
       id: id('a'),
       role: 'assistant',
@@ -82,13 +81,13 @@ export async function processUserMessageV2(rawText: string) {
 
     useAppStore.getState().addMessage(assistantMsg);
     return { suggestions: response.suggestions, intent, assistantMsg };
+
   } catch (err) {
     console.error('[MedScan] processing error', err);
     const fallback: Message = {
       id: id('a'),
       role: 'assistant',
-      content:
-        'Something went wrong while preparing that answer. Try rephrasing, or search a medicine name and ask again.',
+      content: 'Something went wrong. Try rephrasing or search a medicine name and ask again.',
       timestamp: now(),
       metadata: { type: 'error' },
     };

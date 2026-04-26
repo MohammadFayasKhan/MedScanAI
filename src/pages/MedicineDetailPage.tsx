@@ -127,20 +127,54 @@ function labelColor(label?: string) {
   return '#F5A623';
 }
 
+/**
+ * Cleans raw safety text that may contain HTML-like artifacts from the data source.
+ * E.g. strips tokens like 'imageAltTextAlcohol', 'class=xSmallRegular', etc.
+ */
+function cleanSafetyText(raw?: string): string {
+  if (!raw?.trim()) return '';
+  return raw
+    .replace(/imageAlt\w*/gi, '')         // remove imageAltText... tokens
+    .replace(/class=\w+/gi, '')           // remove class=... tokens
+    .replace(/H[1-6]\s+class=\S+/gi, '') // remove H3 class=xSmallRegular etc.
+    .replace(/\s{2,}/g, ' ')             // collapse multiple spaces
+    .replace(/,\s*,/g, ',')              // remove double commas
+    .replace(/^[,\s]+|[,\s]+$/g, '')     // trim leading/trailing commas+spaces
+    .trim();
+}
+
 function SafetyCard({ title, label, text }: { title: string; label?: string; text?: string }) {
   const color = labelColor(label);
+  const cleaned = cleanSafetyText(text) || NOT_SPECIFIED;
+
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl">
+    <div
+      className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl"
+      style={{ overflow: 'hidden' }}
+    >
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.55)' }}>
           {title}
         </p>
-        <span className="text-[10px] font-bold px-2 py-1 rounded-full" style={{ color, background: `${color}18`, border: `1px solid ${color}35` }}>
+        <span
+          className="text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+          style={{ color, background: `${color}18`, border: `1px solid ${color}35` }}
+        >
           {(label || 'CONSULT_DOCTOR').replace(/_/g, ' ')}
         </span>
       </div>
-      <p className="text-sm leading-relaxed" style={{ color: 'rgba(255,255,255,0.78)' }}>
-        {text?.trim() || NOT_SPECIFIED}
+      <p
+        className="text-sm leading-relaxed"
+        style={{
+          color: 'rgba(255,255,255,0.78)',
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          hyphens: 'auto',
+          maxHeight: '120px',
+          overflowY: 'auto',
+        }}
+      >
+        {cleaned}
       </p>
     </div>
   );

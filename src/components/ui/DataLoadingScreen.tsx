@@ -1,10 +1,7 @@
 /**
  * MedScanAI : DataLoadingScreen
- * iOS-style glassmorphism loading screen with:
- *   - Pulsing teal medicine icon with glow
- *   - Glassmorphism progress card
- *   - Animated gradient progress bar
- *   - Rotating medicine facts every 4s
+ * Fixed: logo/text overlap resolved by reordering DOM (title above icon),
+ *        adding overflow:hidden on icon container, improved animations.
  */
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -27,8 +24,19 @@ interface DataLoadingScreenProps {
   progress?: number;
 }
 
-export default function DataLoadingScreen({ message = 'Loading medicine database...', progress }: DataLoadingScreenProps) {
-  const [factIndex, setFactIndex] = useState(() => Math.floor(Math.random() * MEDICINE_FACTS.length));
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.5, ease: 'easeOut' as const, delay },
+});
+
+export default function DataLoadingScreen({
+  message = 'Loading medicine database...',
+  progress,
+}: DataLoadingScreenProps) {
+  const [factIndex, setFactIndex] = useState(() =>
+    Math.floor(Math.random() * MEDICINE_FACTS.length)
+  );
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -44,48 +52,56 @@ export default function DataLoadingScreen({ message = 'Loading medicine database
     >
       <div className="w-full max-w-sm flex flex-col items-center gap-xl">
 
-        {/* Pulsing icon with glow */}
-        <div className="relative">
-          <motion.div
-            animate={{ scale: [1, 1.06, 1], opacity: [0.85, 1, 0.85] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-20 h-20 rounded-2xl flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
-              boxShadow: '0 0 40px rgba(0,212,170,0.35)',
-            }}
-          >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 38, color: '#003d2e', fontVariationSettings: "'FILL' 1" }}
-            >
-              medication
-            </span>
-          </motion.div>
-          {/* Glow ring */}
-          <motion.div
-            animate={{ opacity: [0.3, 0.7, 0.3], scale: [1, 1.15, 1] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute inset-0 rounded-2xl pointer-events-none"
-            style={{ background: 'rgba(0,212,170,0.2)', filter: 'blur(12px)' }}
-          />
-        </div>
-
-        {/* Title */}
-        <div className="text-center">
+        {/* ── App title (ABOVE icon so it never overlaps) ──────────── */}
+        <motion.div {...fadeUp(0)} className="text-center">
           <h1
             className="font-black uppercase tracking-tighter"
-            style={{ fontSize: 28, color: 'var(--primary-container)' }}
+            style={{ fontSize: 28, color: 'var(--primary-container)', letterSpacing: '-0.03em' }}
           >
             MedScanAI
           </h1>
           <p className="text-on-surface-variant mt-xs" style={{ fontSize: 14 }}>
             Your Offline Medicine Intelligence
           </p>
-        </div>
+        </motion.div>
 
-        {/* Glassmorphism progress card */}
-        <div
+        {/* ── Pulsing icon with glow — overflow:hidden clips any icon bleed ── */}
+        <motion.div {...fadeUp(0.1)} className="relative flex-shrink-0">
+          {/* Outer glow ring */}
+          <motion.div
+            animate={{ opacity: [0.25, 0.6, 0.25], scale: [1, 1.18, 1] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute -inset-3 rounded-3xl pointer-events-none"
+            style={{ background: 'rgba(0,212,170,0.18)', filter: 'blur(14px)' }}
+          />
+          {/* Icon container — overflow:hidden prevents icon glyph from spilling out */}
+          <motion.div
+            animate={{ scale: [1, 1.05, 1], opacity: [0.9, 1, 0.9] }}
+            transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+            className="relative w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden"
+            style={{
+              background: 'linear-gradient(135deg, #00d4aa 0%, #00b894 100%)',
+              boxShadow: '0 0 40px rgba(0,212,170,0.4), 0 8px 32px rgba(0,0,0,0.4)',
+            }}
+          >
+            <span
+              className="material-symbols-outlined select-none"
+              style={{
+                fontSize: 42,
+                color: '#003d2e',
+                fontVariationSettings: "'FILL' 1",
+                display: 'block',
+                lineHeight: 1,
+              }}
+            >
+              medication
+            </span>
+          </motion.div>
+        </motion.div>
+
+        {/* ── Glassmorphism progress card ───────────────────────────── */}
+        <motion.div
+          {...fadeUp(0.2)}
           className="w-full rounded-2xl p-lg flex flex-col gap-md"
           style={{
             background: 'rgba(255,255,255,0.04)',
@@ -94,14 +110,14 @@ export default function DataLoadingScreen({ message = 'Loading medicine database
             boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           }}
         >
-          {/* Stage + percentage */}
-          <div className="flex items-center justify-between">
-            <p className="text-on-surface-variant" style={{ fontSize: 13 }}>
+          {/* Stage message + percentage */}
+          <div className="flex items-center justify-between gap-sm">
+            <p className="text-on-surface-variant truncate" style={{ fontSize: 13 }}>
               {message}
             </p>
             {progress !== undefined && (
               <span
-                className="font-semibold"
+                className="font-semibold flex-shrink-0"
                 style={{ fontSize: 13, color: 'var(--primary-container)' }}
               >
                 {Math.round(progress)}%
@@ -147,9 +163,7 @@ export default function DataLoadingScreen({ message = 'Loading medicine database
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.35 }}
               className="flex items-start gap-sm pt-xs"
-              style={{
-                borderTop: '1px solid rgba(255,255,255,0.06)',
-              }}
+              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
             >
               <span
                 className="material-symbols-outlined flex-shrink-0"
@@ -165,11 +179,11 @@ export default function DataLoadingScreen({ message = 'Loading medicine database
               </p>
             </motion.div>
           </AnimatePresence>
-        </div>
+        </motion.div>
 
-        {/* Typing dots (no progress bar scenario) */}
+        {/* ── Typing dots (no determinate progress) ──────────────── */}
         {progress === undefined && (
-          <div className="flex gap-sm">
+          <motion.div {...fadeUp(0.3)} className="flex gap-sm">
             {[0, 1, 2].map(i => (
               <span
                 key={i}
@@ -177,7 +191,7 @@ export default function DataLoadingScreen({ message = 'Loading medicine database
                 style={{ animationDelay: `${i * 0.2}s` }}
               />
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

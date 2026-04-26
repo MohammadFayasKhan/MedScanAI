@@ -1,10 +1,10 @@
 /**
  * @file SuggestionChips.tsx
- * @description SuggestionChips.tsx module implementation used by the MedScanAI application.
- * @module Components
+ * Dynamic suggestion chips — reads from store's currentSuggestions after each AI response.
  */
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedButton from '../AnimatedButton';
+import { useAppStore } from '../../store/useAppStore';
 
 interface SuggestionChipsProps {
   hasActiveMedicine: boolean;
@@ -13,20 +13,30 @@ interface SuggestionChipsProps {
   dynamicChips?: string[];
 }
 
-export default function SuggestionChips({ hasActiveMedicine, isTyping, onSend, dynamicChips = [] }: SuggestionChipsProps) {
+const DEFAULT_NO_MED  = ['Paracetamol', 'Fever medicine', 'Allergy relief', 'Ibuprofen'];
+const DEFAULT_WITH_MED = ['Side effects', 'Dosage', 'Interactions', 'Pregnancy safety', 'Price'];
+
+export default function SuggestionChips({
+  hasActiveMedicine,
+  isTyping,
+  onSend,
+  dynamicChips = [],
+}: SuggestionChipsProps) {
+  const storeSuggestions = useAppStore(s => s.currentSuggestions);
+
   if (isTyping) return null;
 
-  let chipsToRender = dynamicChips;
-
-  if (chipsToRender.length === 0) {
-    if (hasActiveMedicine) {
-      chipsToRender = ['Side effects', 'Dosage', 'Interactions', 'Pregnancy safety'];
-    } else {
-      chipsToRender = ['Paracetamol', 'Fever medicine', 'Allergy relief', 'Ibuprofen'];
-    }
+  // Priority: dynamicChips (from parent) → store suggestions → defaults
+  let chips: string[];
+  if (dynamicChips.length > 0) {
+    chips = dynamicChips;
+  } else if (storeSuggestions.length > 0) {
+    chips = storeSuggestions;
+  } else {
+    chips = hasActiveMedicine ? DEFAULT_WITH_MED : DEFAULT_NO_MED;
   }
 
-  if (chipsToRender.length === 0) return null;
+  if (chips.length === 0) return null;
 
   return (
     <AnimatePresence>
@@ -34,18 +44,24 @@ export default function SuggestionChips({ hasActiveMedicine, isTyping, onSend, d
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0 }}
-        transition={{ delay: 0.2 }}
+        transition={{ delay: 0.15 }}
         className="flex flex-wrap gap-2 py-3"
       >
-        {chipsToRender.map(chip => (
-          <AnimatedButton
+        {chips.map((chip, i) => (
+          <motion.div
             key={chip}
-            variant="secondary"
-            onClick={() => onSend(chip)}
-            className="!px-4 !py-2 !rounded-full !text-xs !bg-primary/10 !border-primary/20 !text-primary hover:!bg-primary/20"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.04 }}
           >
-            {chip}
-          </AnimatedButton>
+            <AnimatedButton
+              variant="secondary"
+              onClick={() => onSend(chip)}
+              className="!px-4 !py-2 !rounded-full !text-xs !bg-primary/10 !border-primary/20 !text-primary hover:!bg-primary/20"
+            >
+              {chip}
+            </AnimatedButton>
+          </motion.div>
         ))}
       </motion.div>
     </AnimatePresence>
