@@ -39,7 +39,7 @@ export default function LoadingOverlay({ message = 'Analyzing...', progress = 0 
     }, stepTime);
     
     return () => clearInterval(timer);
-  }, [progress]);
+  }, [progress, displayProgress]);
 
   let subMessage = "Initializing neural engine...";
   if (progress < 15) subMessage = "Calibrating optical sensors...";
