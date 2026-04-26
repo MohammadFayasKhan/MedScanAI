@@ -1,3 +1,11 @@
+---
+title: MedScanAI
+emoji: 💊
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
 # MedScanAI
 
 <p align="center">
