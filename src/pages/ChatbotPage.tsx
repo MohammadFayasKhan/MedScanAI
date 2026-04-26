@@ -245,8 +245,14 @@ export default function ChatbotPage() {
 
   if (!seenRef.current) seenRef.current = new Set(messages.map(m => m.id));
 
+  const skipSyncRef = useRef(false);
+
   /* URL sync */
   useEffect(() => {
+    if (skipSyncRef.current) {
+      skipSyncRef.current = false;
+      return;
+    }
     const urlId = searchParams.get('medicineId');
     if (urlId && (!activeMedicine || activeMedicine.id !== urlId)) {
       const numId = parseInt(urlId, 10);
@@ -282,10 +288,20 @@ export default function ChatbotPage() {
 
   /* Sidebar actions */
   const handleLoadSession = useCallback((sessionId: string, medicineId: string | null) => {
+    skipSyncRef.current = true;
+    const sessionToLoad = previousChatSessions.find(s => s.id === sessionId);
+    if (sessionToLoad && seenRef.current) {
+      sessionToLoad.messages.forEach(m => seenRef.current!.add(m.id));
+    }
+    
     switchChatSession(sessionId);
-    if (medicineId) setActiveMedicine(medicineId, { clearChat: false });
-    else setSearchParams({}, { replace: true });
-  }, [switchChatSession, setActiveMedicine, setSearchParams]);
+    if (medicineId) {
+      setActiveMedicine(medicineId, { clearChat: false });
+      setSearchParams({ medicineId }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [switchChatSession, setActiveMedicine, setSearchParams, previousChatSessions]);
 
   const handleDeleteSession = useCallback((sessionId: string) => {
     deleteChatSession(sessionId);

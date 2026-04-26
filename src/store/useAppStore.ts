@@ -110,6 +110,13 @@ export interface ChatSession {
   type: 'medicine' | 'symptom' | 'general';
 }
 
+export interface UserProfile {
+  age?: number;
+  pregnancyStatus?: string;
+  chronicConditions?: string[];
+  [key: string]: unknown;
+}
+
 export interface MedScanDatabaseState {
   // Core Medicine Data
   medicines: Map<string, Medicine>;
@@ -119,6 +126,8 @@ export interface MedScanDatabaseState {
   activeMedicineId: string | null;
   currentChatSession: ChatSession;
   previousChatSessions: ChatSession[];
+  userProfile: UserProfile;
+  unansweredThreads: string[];
 
   // History Management
   recentMedicines: string[]; // Array of IDs, max 10, LRU order
@@ -156,6 +165,9 @@ export interface DatabaseActions {
   switchChatSession: (sessionId: string) => void;
   addMessage: (message: Message) => void;
   clearAllMessages: () => void;
+  updateUserProfile: (profile: Partial<UserProfile>) => void;
+  addUnansweredThread: (thread: string) => void;
+  removeUnansweredThread: (thread: string) => void;
 
   // History Operations (MUST SYNC EVERYWHERE)
   addToRecent: (medicineId: string) => void;
@@ -267,6 +279,8 @@ type PersistedV2 = {
   activeMedicineId: string | null;
   currentChatSession: ChatSession;
   previousChatSessions: ChatSession[];
+  userProfile: UserProfile;
+  unansweredThreads: string[];
 
   recentMedicines: string[];
   pinnedMedicines: string[];
@@ -332,6 +346,9 @@ function validateAndCoercePersisted(raw: unknown): PersistedV2 | null {
     ? (raw.previousChatSessions as unknown[]).slice(-MAX_SESSION_HISTORY).map(coerceChatSession)
     : [];
 
+  const userProfile = isObject(raw.userProfile) ? (raw.userProfile as UserProfile) : {};
+  const unansweredThreads = asStringArray(raw.unansweredThreads);
+
   const recentMedicines = clampRecent(asStringArray(raw.recentMedicines));
   const pinnedMedicines = asStringArray(raw.pinnedMedicines);
 
@@ -359,6 +376,8 @@ function validateAndCoercePersisted(raw: unknown): PersistedV2 | null {
     activeMedicineId,
     currentChatSession,
     previousChatSessions,
+    userProfile,
+    unansweredThreads,
     recentMedicines,
     pinnedMedicines,
     lastAccessedAt,
@@ -385,6 +404,8 @@ function serializeForExport(state: MedScanDatabaseState): string {
     activeMedicineId: state.activeMedicineId,
     currentChatSession: state.currentChatSession,
     previousChatSessions: state.previousChatSessions.slice(-MAX_SESSION_HISTORY),
+    userProfile: state.userProfile,
+    unansweredThreads: state.unansweredThreads,
 
     recentMedicines: clampRecent(state.recentMedicines),
     pinnedMedicines: state.pinnedMedicines,
@@ -471,6 +492,8 @@ function defaultState(): MedScanDatabaseState {
       return { ...createNewChatSession(null, 'general'), messages: [welcome] };
     })(),
     previousChatSessions: [],
+    userProfile: {},
+    unansweredThreads: [],
 
     recentMedicines: [],
     pinnedMedicines: [],
@@ -656,6 +679,21 @@ export const useAppStore = create<MedScanStore>()(
         get().saveToStorage();
       },
 
+      updateUserProfile: (profile) => {
+        set({ userProfile: { ...get().userProfile, ...profile } });
+        get().saveToStorage();
+      },
+
+      addUnansweredThread: (thread) => {
+        set({ unansweredThreads: [...get().unansweredThreads, thread] });
+        get().saveToStorage();
+      },
+
+      removeUnansweredThread: (thread) => {
+        set({ unansweredThreads: get().unansweredThreads.filter((t) => t !== thread) });
+        get().saveToStorage();
+      },
+
       addToRecent: (medicineId) => {
         const state = get();
         const filtered = state.recentMedicines.filter((id) => id !== medicineId);
@@ -823,6 +861,8 @@ export const useAppStore = create<MedScanStore>()(
           activeMedicineId: state.activeMedicineId,
           currentChatSession: state.currentChatSession,
           previousChatSessions: state.previousChatSessions,
+          userProfile: state.userProfile,
+          unansweredThreads: state.unansweredThreads,
           recentMedicines: state.recentMedicines,
           pinnedMedicines: state.pinnedMedicines,
           lastAccessedAt: state.lastAccessedAt,
@@ -863,6 +903,8 @@ export const useAppStore = create<MedScanStore>()(
           previousChatSessions: (persisted.previousChatSessions || []).map((s) =>
             s.activeMedicineId && medicines.has(s.activeMedicineId) ? s : { ...s, activeMedicineId: null, type: 'general' as const }
           ),
+          userProfile: persisted.userProfile,
+          unansweredThreads: persisted.unansweredThreads,
           recentMedicines: clampRecent(persisted.recentMedicines),
           pinnedMedicines: persisted.pinnedMedicines,
           lastAccessedAt: new Map(persisted.lastAccessedAt),
@@ -895,6 +937,8 @@ export const useAppStore = create<MedScanStore>()(
           activeMedicineId: state.activeMedicineId,
           currentChatSession: state.currentChatSession,
           previousChatSessions: state.previousChatSessions,
+          userProfile: state.userProfile,
+          unansweredThreads: state.unansweredThreads,
           recentMedicines: state.recentMedicines,
           pinnedMedicines: state.pinnedMedicines,
           lastAccessedAt: state.lastAccessedAt,

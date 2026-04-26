@@ -11,10 +11,15 @@ function value(text: unknown, fallback = 'Not specified in the offline database 
   return str || fallback;
 }
 
-function labelBadge(label?: string) {
-  const normalized = value(label, 'CONSULT_DOCTOR').replace(/_/g, ' ');
-  if (/safe/i.test(normalized)) return `✅ ${normalized}`;
-  if (/avoid|unsafe/i.test(normalized)) return `⛔ ${normalized}`;
+function labelBadge(label?: string): string {
+  if (!label || typeof label !== 'string') return '⚠️ Consult Doctor';
+  
+  const normalized = label.replace(/_/g, ' ').trim();
+  const lower = normalized.toLowerCase();
+  
+  if (/safe|approved|low risk|generally safe/i.test(lower)) return `✅ ${normalized}`;
+  if (/avoid|unsafe|contraindicated|high risk|do not use/i.test(lower)) return `⛔ ${normalized}`;
+  
   return `⚠️ ${normalized}`;
 }
 

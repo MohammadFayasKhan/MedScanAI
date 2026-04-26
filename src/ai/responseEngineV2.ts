@@ -27,10 +27,15 @@ function isMissing(arrOrStr: string | string[] | null | undefined): boolean {
   return arrOrStr.trim().length === 0 || /not specified/i.test(arrOrStr);
 }
 
-function labelBadge(label?: string) {
-  const normalized = (value(label) || 'CONSULT DOCTOR').replace(/_/g, ' ');
-  if (/safe/i.test(normalized)) return `✅ ${normalized}`;
-  if (/avoid|unsafe/i.test(normalized)) return `⛔ ${normalized}`;
+function labelBadge(label?: string): string {
+  if (!label || typeof label !== 'string') return '⚠️ Consult Doctor';
+  
+  const normalized = label.replace(/_/g, ' ').trim();
+  const lower = normalized.toLowerCase();
+  
+  if (/safe|approved|low risk|generally safe/i.test(lower)) return `✅ ${normalized}`;
+  if (/avoid|unsafe|contraindicated|high risk|do not use/i.test(lower)) return `⛔ ${normalized}`;
+  
   return `⚠️ ${normalized}`;
 }
 
@@ -66,11 +71,27 @@ function getFormSpecificTip(form: MedicineForm): string {
 function handleMissingData(m: Medicine, topicLabel: string, expectedClassBehavior: string, specificQuestions: string[]): string {
   const medClass = value(m.class) || 'similar medications';
   return [
-    `While our database doesn't have specific data on ${topicLabel} for **${m.name}**, medicines in this class (${medClass}) typically ${expectedClassBehavior}.`,
+    `Our database doesn't have specific ${topicLabel} data for **${m.name}**...`,
+    `...but medicines in this class (${medClass}) typically ${expectedClassBehavior}.`,
     '',
-    `⚠️ **When you speak with your doctor, you might ask:**`,
+    `⚠️ **Actionable Monitoring:** Watch for unexpected symptoms or changes. If you notice concerning signs, contact your doctor.`,
+    '',
+    `⚠️ **When you consult your provider, ask:**`,
     bullet(specificQuestions),
+    '',
+    `While that exact detail isn't stored, I can clarify related topics like usage instructions or alternatives. What would you prefer?`
   ].join('\n');
+}
+
+const CLOSERS = [
+  "Does this help clarify things? 😊",
+  "Can I help you with anything else today? 😊",
+  "What else would you like to explore? 😊",
+  "Let me know if you need more specific details! 😊",
+  "Would you like proper application guidance or safer alternatives? 😊"
+];
+function getRandomCloser(): string {
+  return CLOSERS[Math.floor(Math.random() * CLOSERS.length)];
 }
 
 /* ── Suggestion sets ─────────────────────────────────────────────── */
@@ -253,7 +274,7 @@ function formatSideEffects(m: Medicine): string {
     `• Are there any drug interactions?`,
     `• What is the correct dosage?`,
     '',
-    `Always monitor how you feel when starting a new medication. Does this help clarify things? 😊`,
+    `Always monitor how you feel when starting a new medication. ${getRandomCloser()}`,
   ].join('\n').replace(/\n\n\n/g, '\n\n');
 }
 
@@ -290,7 +311,7 @@ function formatDosage(m: Medicine, demographic?: IntentResult['demographic']): s
     `• What if I miss a dose?`,
     `• Should I take this with food?`,
     '',
-    `Always follow your healthcare provider's specific instructions. Is there anything else about using this ${form} you'd like to know? 😊`,
+    `Always follow your healthcare provider's specific instructions. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -317,7 +338,7 @@ function formatInteractions(m: Medicine): string {
     `• Is it safe to consume alcohol with this?`,
     `• What are the contraindications?`,
     '',
-    `Please share all medications and supplements with your doctor before starting this. Does that help? 😊`,
+    `Please share all medications and supplements with your doctor before starting this. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -349,7 +370,7 @@ function formatPregnancySafety(m: Medicine): string {
     `• Is this safe during breastfeeding?`,
     `• Are there any safer alternative medicines?`,
     '',
-    `Your doctor's advice based on your specific health profile is most important. How else can I assist you? 😊`,
+    `Your doctor's advice based on your specific health profile is most important. ${getRandomCloser()}`,
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -382,7 +403,7 @@ function formatUsageInstructions(m: Medicine): string {
     `• What if I miss an application/dose?`,
     `• How should I store this?`,
     '',
-    `Always follow your healthcare provider's specific instructions. Is there anything else you'd like to know? 😊`,
+    `Always follow your healthcare provider's specific instructions. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -408,7 +429,7 @@ function formatStorage(m: Medicine): string {
     `• What is the correct dosage?`,
     `• How should I use this medicine?`,
     '',
-    `When in doubt, ask your pharmacist about specific storage requirements. Can I help with anything else? 😊`,
+    `When in doubt, ask your pharmacist about specific storage requirements. ${getRandomCloser()}`,
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -427,7 +448,7 @@ function formatMissedDose(m: Medicine): string {
     `• What is the correct dosage schedule?`,
     `• What should I do in case of an overdose?`,
     '',
-    `Contact your doctor if you have missed multiple days of treatment. Is there anything else I can clarify? 😊`,
+    `Contact your doctor if you have missed multiple days of treatment. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -464,7 +485,7 @@ function formatComposition(m: Medicine): string {
     `• Are there cheaper generic alternatives available?`,
     `• What is the exact mechanism of action?`,
     '',
-    `Always read the product label for complete ingredient information. Does this answer your question? 😊`,
+    `Always read the product label for complete ingredient information. ${getRandomCloser()}`,
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -492,7 +513,7 @@ function formatContraindications(m: Medicine): string {
     `• What are the known drug interactions?`,
     `• Is this safe during pregnancy?`,
     '',
-    `Safety always comes first. Is there any specific condition you are concerned about? 😊`,
+    `Safety always comes first. ${getRandomCloser()}`,
   ].join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
@@ -512,7 +533,7 @@ function formatAlternatives(m: Medicine): string {
     `• How much does this medicine cost?`,
     `• What is the composition of this drug?`,
     '',
-    `Would you like me to check the pricing details for you? 😊`,
+    `Would you like me to check the pricing details for you? ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -542,7 +563,7 @@ function formatPrice(m: Medicine): string {
     `• What are the alternatives to this medicine?`,
     `• What is the correct dosage?`,
     '',
-    `Prices can vary slightly by pharmacy. Anything else about pricing or affordability I can help with? 😊`,
+    `Prices can vary slightly by pharmacy. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -570,7 +591,7 @@ function formatAlcohol(m: Medicine): string {
     `• Is it safe to drive after taking this?`,
     `• Does this affect the liver?`,
     '',
-    `When in doubt, it is best to avoid alcohol entirely while on medication. Does this answer your question? 😊`,
+    `When in doubt, it is best to avoid alcohol entirely while on medication. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -591,7 +612,7 @@ function formatDrivingSafety(m: Medicine): string {
     `• Is it safe to consume alcohol with this?`,
     `• What are the common side effects?`,
     '',
-    `When in doubt, prioritize your safety and do not drive. Can I clarify anything else for you? 😊`,
+    `When in doubt, prioritize your safety and do not drive. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -621,7 +642,7 @@ function formatKidneySafety(m: Medicine): string {
     `• Is this safe for the liver?`,
     `• What are the contraindications?`,
     '',
-    `Always consult your nephrologist before starting or stopping this medicine. Does this help? 😊`,
+    `Always consult your nephrologist before starting or stopping this medicine. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -651,7 +672,7 @@ function formatLiverSafety(m: Medicine): string {
     `• Is it safe to consume alcohol?`,
     `• Is this safe for the kidneys?`,
     '',
-    `Always consult your hepatologist or primary doctor before use. Can I help you with anything else? 😊`,
+    `Always consult your hepatologist or primary doctor before use. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -675,7 +696,7 @@ function formatAllergy(m: Medicine): string {
     `• What are the normal side effects?`,
     `• What are the contraindications?`,
     '',
-    `If you have a known allergy to ${value(m.genericName) || 'this medicine'}, do not take it. Is there anything else you need to know? 😊`,
+    `If you have a known allergy to ${value(m.genericName) || 'this medicine'}, do not take it. ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -701,7 +722,7 @@ function formatMechanism(m: Medicine): string {
     `• What are the active ingredients?`,
     `• What are the common side effects?`,
     '',
-    `Does that explanation make sense? Let me know if you'd like me to clarify anything! 😊`,
+    `Does that explanation make sense? ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -735,7 +756,7 @@ function formatQuickTips(m: Medicine): string {
     `• How should I store this?`,
     `• What if I miss a dose?`,
     '',
-    `Is there any specific tip you'd like more details on? 😊`,
+    `Is there any specific tip you'd like more details on? ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -767,7 +788,7 @@ function formatSymptomResults(symptom: string, meds: Medicine[]): string {
     '',
     `⚠️ **Important:** These are suggestions based on data. Always confirm with your doctor before taking any of them.`,
     '',
-    `Which of these medicines would you like detailed information about? 😊`,
+    `Which of these medicines would you like detailed information about? ${getRandomCloser()}`,
   ].join('\n');
 }
 
@@ -793,7 +814,7 @@ function formatComparison(a: Medicine, b: Medicine): string {
     '',
     `⚠️ **Note:** The "better" choice depends entirely on your specific symptoms, medical history, and doctor's advice.`,
     '',
-    `Tell me your specific condition or constraints, and I can help you evaluate them further! 😊`,
+    `Tell me your specific condition or constraints, and I can help you evaluate them further! ${getRandomCloser()}`,
   ].join('\n');
 }
 

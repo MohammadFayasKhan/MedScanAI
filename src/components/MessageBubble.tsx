@@ -11,7 +11,21 @@ import { motion } from 'framer-motion';
 import { Check, CheckCheck } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import DOMPurify from 'dompurify';
 import type { Message } from '../store/useAppStore';
+
+function sanitizeMedicalText(raw: string) {
+  if (!raw) return '';
+  return raw
+    .replace(/<ol[^>]*>/gi, '\n')
+    .replace(/<\/ol>/gi, '\n')
+    .replace(/<li[^>]*>/gi, '\n• ')
+    .replace(/<\/li>/gi, '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/\bol\b\s*/gi, '') // Remove stray "ol" text
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
 
 interface Props {
   message: Message;
@@ -103,10 +117,9 @@ export default function MessageBubble({ message, animate = true, onStreamChange 
           padding: '12px 16px',
         }}
       >
-        {/* Markdown content with explicit dark-mode styling */}
         <div className={`medscan-markdown leading-relaxed ${isStreaming ? 'streaming-markdown' : ''}`}>
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
-            {isUser ? message.content : displayedText}
+            {DOMPurify.sanitize(sanitizeMedicalText(isUser ? message.content : displayedText))}
           </ReactMarkdown>
         </div>
 
