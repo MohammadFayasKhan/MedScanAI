@@ -16,7 +16,7 @@ localforage.config({
   description: 'Offline SQLite database cache',
 });
 
-type ProgressCallback = (message: string) => void;
+type ProgressCallback = (message: string, percent?: number) => void;
 
 function baseUrl() {
   const base = import.meta.env.BASE_URL || '/';
@@ -157,9 +157,9 @@ export class SqliteDatabase {
           if (event.lengthComputable && event.total > 0) {
             const total = (event.total / (1024 * 1024)).toFixed(1);
             const percent = Math.round((event.loaded / event.total) * 100);
-            onProgress(`Downloading database: ${mb} / ${total} MB (${percent}%)`);
+            onProgress(`Downloading database: ${mb} / ${total} MB`, percent);
           } else {
-            onProgress(`Downloading & extracting database: ${mb} MB...`);
+            onProgress(`Downloading database: ${mb} MB...`);
           }
         };
 

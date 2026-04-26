@@ -29,10 +29,10 @@ function PageLoader() {
 }
 
 function AppRoutes() {
-  const { isReady, progressMsg, error } = useDatabaseContext();
+  const { isReady, progressMsg, progressPercent, error } = useDatabaseContext();
 
   if (!isReady && !error) {
-    return <DataLoadingScreen message={progressMsg || 'Loading offline index…'} />;
+    return <DataLoadingScreen message={progressMsg || 'Loading offline index…'} progress={progressPercent} />;
   }
 
   if (error) {

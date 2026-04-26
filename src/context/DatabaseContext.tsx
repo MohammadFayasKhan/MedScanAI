@@ -9,6 +9,7 @@ interface DatabaseContextValue {
   isReady: boolean;
   medicineCount: number;
   progressMsg: string;
+  progressPercent?: number;
   error: string | null;
 }
 
@@ -16,6 +17,7 @@ const DatabaseContext = createContext<DatabaseContextValue>({
   isReady: false,
   medicineCount: 0,
   progressMsg: 'Initialising…',
+  progressPercent: undefined,
   error: null,
 });
 
@@ -23,10 +25,14 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [isReady,       setIsReady]       = useState(false);
   const [medicineCount, setMedicineCount] = useState(0);
   const [progressMsg,   setProgressMsg]   = useState('Loading database…');
+  const [progressPercent, setProgressPercent] = useState<number | undefined>(undefined);
   const [error,         setError]         = useState<string | null>(null);
 
   useEffect(() => {
-    initDatabase((msg) => setProgressMsg(msg))
+    initDatabase((msg, pct) => {
+      setProgressMsg(msg);
+      setProgressPercent(pct);
+    })
       .then((count) => {
         setMedicineCount(count);
         setIsReady(true);
@@ -39,7 +45,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <DatabaseContext.Provider value={{ isReady, medicineCount, progressMsg, error }}>
+    <DatabaseContext.Provider value={{ isReady, medicineCount, progressMsg, progressPercent, error }}>
       {children}
     </DatabaseContext.Provider>
   );

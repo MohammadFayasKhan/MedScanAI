@@ -12,10 +12,10 @@ export function getDatabaseStatus() {
   return { isReady, message: loadingMessage };
 }
 
-export async function initDatabase(onProgress: (msg: string) => void): Promise<number> {
-  const count = await sqliteDatabase.init((message) => {
+export async function initDatabase(onProgress: (msg: string, percent?: number) => void): Promise<number> {
+  const count = await sqliteDatabase.init((message, percent) => {
     loadingMessage = message;
-    onProgress(message);
+    onProgress(message, percent);
   });
   isReady = true;
   loadingMessage = 'Ready';

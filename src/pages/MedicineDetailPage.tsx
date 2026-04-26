@@ -129,49 +129,55 @@ function labelColor(label?: string) {
 
 /**
  * Cleans raw safety text that may contain HTML-like artifacts from the data source.
- * E.g. strips tokens like 'imageAltTextAlcohol', 'class=xSmallRegular', etc.
  */
 function cleanSafetyText(raw?: string): string {
   if (!raw?.trim()) return '';
   return raw
-    .replace(/imageAlt\w*/gi, '')         // remove imageAltText... tokens
-    .replace(/class=\w+/gi, '')           // remove class=... tokens
-    .replace(/H[1-6]\s+class=\S+/gi, '') // remove H3 class=xSmallRegular etc.
-    .replace(/\s{2,}/g, ' ')             // collapse multiple spaces
-    .replace(/,\s*,/g, ',')              // remove double commas
-    .replace(/^[,\s]+|[,\s]+$/g, '')     // trim leading/trailing commas+spaces
+    .replace(/imageUrlhttps?:\/\/[^\s,]+/gi, '') // remove imageUrlhttps://...
+    .replace(/imageAlt\w*/gi, '')                // remove imageAltText... tokens
+    .replace(/imageCaption\s*H[1-6]/gi, '')      // remove imageCaption H3 etc
+    .replace(/class=\w+/gi, '')                  // remove class=... tokens
+    .replace(/H[1-6]\s+class=\S+/gi, '')         // remove H3 class=xSmallRegular etc.
+    .replace(/label:\s*/gi, '')                  // remove label: prefix if accidentally in text
+    .replace(/,\s*,/g, ',')                      // remove double commas
+    .replace(/\s+\./g, '.')                      // remove spaces before periods
+    .replace(/\.\./g, '.')                       // remove double periods
+    .replace(/,\./g, '.')                        // replace comma followed by period
+    .replace(/\.,/g, '.')                        // replace period followed by comma
+    .replace(/\s{2,}/g, ' ')                     // collapse multiple spaces
+    .replace(/^[,\s]+|[,\s]+$/g, '')             // trim leading/trailing commas+spaces
     .trim();
 }
 
 function SafetyCard({ title, label, text }: { title: string; label?: string; text?: string }) {
-  const color = labelColor(label);
+  const badgeText = (label || 'CONSULT DOCTOR')
+    .replace(/^label:\s*/i, '') // Remove 'label:' prefix
+    .replace(/_/g, ' ');
+  const color = labelColor(badgeText);
   const cleaned = cleanSafetyText(text) || NOT_SPECIFIED;
 
   return (
     <div
-      className="rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-xl"
-      style={{ overflow: 'hidden' }}
+      className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl flex flex-col w-full"
     >
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.55)' }}>
+      <div className="flex items-start justify-between gap-3 mb-2 flex-wrap">
+        <p className="text-xs font-semibold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
           {title}
         </p>
         <span
-          className="text-[10px] font-bold px-2 py-1 rounded-full flex-shrink-0"
+          className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0 text-center"
           style={{ color, background: `${color}18`, border: `1px solid ${color}35` }}
         >
-          {(label || 'CONSULT_DOCTOR').replace(/_/g, ' ')}
+          {badgeText}
         </span>
       </div>
       <p
-        className="text-sm leading-relaxed"
+        className="text-sm leading-relaxed mt-1"
         style={{
-          color: 'rgba(255,255,255,0.78)',
+          color: 'rgba(255,255,255,0.85)',
           wordBreak: 'break-word',
           overflowWrap: 'break-word',
-          hyphens: 'auto',
-          maxHeight: '120px',
-          overflowY: 'auto',
+          whiteSpace: 'pre-wrap',
         }}
       >
         {cleaned}
@@ -269,6 +275,28 @@ export default function MedicineDetailPage() {
             </span>
           </div>
         </motion.div>
+
+        {/* ── Image Card ──────────────────────────────────────────────────── */}
+        {medicine.image_url && medicine.image_url.trim() !== '' && !medicine.image_url.includes('Not available') && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="mb-5 p-4 rounded-2xl flex justify-center items-center bg-white/5 border border-white/10"
+          >
+            <div className="bg-white rounded-xl p-2 max-w-[200px] w-full flex items-center justify-center">
+              <img
+                src={medicine.image_url}
+                alt={`${medicine.brand_name} product shot`}
+                className="max-h-40 object-contain"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.style.display = 'none';
+                }}
+              />
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Sections ────────────────────────────────────────────────────── */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}>
