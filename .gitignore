@@ -36,3 +36,13 @@ dist-ssr/
 
 # Git LFS handles CSV tracking
 /public/db/medscan.db
+
+# Report files and generated deliverables
+deliverables/
+*.docx
+*.pdf
+deliverables/INT428_Report_Final*
+deliverables/render_final/
+deliverables/report_render/
+deliverables/report_render_final/
+deliverables/report_render_final_check/
