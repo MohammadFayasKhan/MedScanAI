@@ -1,12 +1,3 @@
----
-title: MedScanAI
-emoji: 💊
-colorFrom: green
-colorTo: blue
-sdk: docker
-pinned: false
----
-
 <p align="center">
   <img src="./public/medscanai-logo.svg" alt="MedScanAI Logo" width="140" />
 </p>
